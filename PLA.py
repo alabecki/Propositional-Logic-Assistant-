@@ -27,17 +27,18 @@ file.seek(0)
 
 
 conjunction = conjoin(file)
+print("Conjunction: %s " % (conjunction))
 
 
 form = pre_cnf_to_cnf(conjunction, propositions)
+print("Form: %s " % (form))
+
 
 fset = cnf_to_set(form)
-print("Set for Resolution")
+print("fset = %s" % (fset))
 
-for f in fset:
-	print(f)
-	for i in f:
-		print(i)
+#fset = get_sat_input(conjunction, propositions)
+#print("fset: %s " % (fset))
 
 
 if resolution(fset, propositions):

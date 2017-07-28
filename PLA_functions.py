@@ -1,5 +1,6 @@
 import sympy.abc
 from sympy.logic.boolalg import Not, And, Or
+from sympy.logic import simplify_logic
 from sympy import*
 from sympy.logic.inference import satisfiable, valid
 from sympy.logic.boolalg import to_cnf
@@ -94,10 +95,6 @@ def obtain_atomic_formulas(file):
 	return propositions
 
 
-	
-			
-
-
 def is_literal(formula):
 	temp = str(formula)
 	for ch in temp:
@@ -145,9 +142,45 @@ def matched(st, start):
 		end_pos += 1
 	return 0
 
+def get_sat_input(formula, propositions):
+	print("Initial formula : %s" % (formula))
+	result = []
+	t1 = formula.split("&")
+	shadow = deepcopy(t1)
+	for t2 in t1:
+		print("t2 %s" % (t2))
+		if t2.startswith("And"):
+			t2 = pre_cnf_to_cnf(t2, propositions)
+			print("t2 after: %s" % (t2))
+			for t3 in t2:
+				shadow.append(t3)
+
+		for p in propositions:
+			if "Not(" + str(p) + ")" in t2:
+				bef = "Not(" + str(p) + ")"
+				aft = "~" + str(p)
+				t2 = t2.replace(bef, aft)
+		t2 = t2.replace("(", "")
+		t2 = t2.replace(")", "")
+	
+		for t3 in t2:
+			print
+			t3 = t3.strip()
+			t3 = t3.split(",")
+			add = set()
+			for i in t3:
+				i = i.strip()
+				add.add(i)
+		result.append(add)
+	print(len(result))
+	return result
+
+
+
 def pre_cnf_to_cnf(formula, propositions):
 	temp = to_cnf(formula)
 	temp = str(temp)
+	print("temp: %s" % (temp))
 	if temp.startswith("And"):
 		temp = temp.replace("And", "")
 		temp = temp[1:]
@@ -156,21 +189,24 @@ def pre_cnf_to_cnf(formula, propositions):
 	temp = temp.split("Or")
 	result = ""
 	for t in temp:
-		print(t)
+		print("temp %s" % (temp))
 		for p in propositions:
 			if "Not(" + str(p) + ")" in t:
 				bef = "Not(" + str(p) + ")"
 				aft = "~" + str(p)
 				t = t.replace(bef, aft)
-				print(t)
+				print("t: %s " % (t))
 		t = t.strip()
 		if t.endswith(","):
 			t = t[:-1]
 		t = t.replace(",", " |")
 		if result == "":
 			result = t
-		else:
-			result = result + " & " + t 
+		if t == "" or t == " ":
+			continue
+		t = re.split(r'\|\s*(?![^()]*\))', t)
+		for item in t:
+			result = result + " & " + item
 	return(result)
 
 def cnf_to_set(formula):
@@ -180,11 +216,15 @@ def cnf_to_set(formula):
 	#formula = formula.replace("&", "")
 	formula = formula.split("&")
 	for f in formula:
-		#print(f)
-		f = str(f)
-		f = f.split("|")
 		addition = set()
+		print(f)
+		f = str(f)
+		if "|" not in f:
+			addition.add(f)
+			continue
+		f = f.split("|")
 		for i in f:
+			i = i.strip()
 			addition.add(i)
 		result.append(addition)
 	return result
@@ -235,20 +275,21 @@ def conjoin(formulas):
 				g = g.lstrip()
 				g = g.rstrip()
 				#print(g)
-				for c in g:
-					c =	Symbol(c)
-				g = Symbol(g)
-				#print(g)
+				g = to_cnf(g)
+
+				print("g:::: %s" % (g))
 				conjunction = And(conjunction, g)
 	conjunction = str(conjunction)
 	conjunction = conjunction.replace("AAA,", "")
+	conjunction = to_cnf(conjunction)
 	return conjunction
 
 def eliminate_supersets(clauses):
 	shadow = deepcopy(clauses)
 	for i in clauses:
 		for j in clauses:
-			if i.issubset(j):
+			if i.issubset(j) and i != j:
+				print("%s is a superset of %s " % (j, i))
 				if j in shadow:
 					shadow.remove(j)
 	return shadow
@@ -268,12 +309,12 @@ def eliminate_unipolar(clauses, propositions):
 			for c in clauses:
 				if str(p) in c:
 					shadow.remove(c)
-					propositions.discard(p)
+					props.discard(p)
 		if t_flag == False and f_flag == True:
-			for c in clasues:
+			for c in clauses:
 				if "~" + str(p) in c:
 					shadow.remove(c)
-					propositions.discard(p)
+					props.discard(p)
 	return shadow
 
 
@@ -282,7 +323,9 @@ def eliminate_tautologies(clauses, propositions):
 	for p in propositions:
 		for c in clauses:
 			if str(p) in c and "~" + str(p) in c:
-				shadow.remove(c)
+				print("tautology %s" % (c))
+				if c in shadow:
+					shadow.remove(c)
 	return shadow
 
 def get_atom(literal):
@@ -295,7 +338,8 @@ def get_atom(literal):
 
 def find_empty(clauses):
 	for c in clauses:
-		if len(c) == 0:
+		print(c)
+		if len(c) == 0 or "False" in c:
 			return True
 	return False
 
@@ -305,36 +349,60 @@ def all_literals(clauses):
 			return False
 	return True 
 
+
+
 def literal_consistancy(clauses, propositions):
 	for p in propositions:
-			if str(p) in clauses and "~" + str(p) in clauses:
+			np = "~" + str(p)
+			n = set()
+			n.add(np)
+			print(set(str(p)), n)
+			if set(str(p)) in clauses and n in clauses:
+				print("Seriously?")
 				return False
 	return True 
 
-def resolve(clauses, props):		#Broken - need to compare literals!!!
+def resolve(a, clauses, props):		
 	trash = []
-	clauses = str(clauses)
+	a = str(a)
+	print("a: %s" % (a))
+	print("not a: %s" % ("~" + a))
 	for i in clauses:
+		print(i)
 		for j in clauses:
-			if a in i and "~"+a in j:
+			print("______%s" % (j))
+			if a in i and "~" + a in j:
+				print("Finally" + str(i) + " " + str(j))
 				resolvant = i.union(j)
-				resolvant = resolvant.difference(a.union("~"+a))
+				print("Pre-Resolvant %s " % (resolvant))
+				minus = {a, "~" + a}
+				print("Minus: %s" % (minus))
+				resolvant = resolvant.difference(minus)
+				print("Resolvant %s " % (resolvant))
 				clauses.append(resolvant)
-				trash.append(i)
-				trash.append(j)
+				if i not in trash:
+					trash.append(i)
+				if j not in trash:
+					trash.append(j)
+	print("Trash")
 	for t in trash:
+		print(t)
 		clauses.remove(t)
 	a = get_atom(a)
-	props.remove(a)
+	print(a)
+	if a in props:
+		props.remove(a)
 
 
 
 
 def resolution(clauses, propositions):
-
 	props = deepcopy(propositions)
 	while True:
-		print("Start of loop:")
+
+		print("Clauses at start of loop:")
+		for c in clauses:
+			print(c)
 		if find_empty(clauses):
 			print("False")
 			return False
@@ -342,9 +410,6 @@ def resolution(clauses, propositions):
 			if literal_consistancy(clauses, props):
 				print("True")
 				return True
-		print("Clauses at start of loop:")
-		for c in clauses:
-			print(c)
 		clauses = eliminate_tautologies(clauses, props)
 		clauses = eliminate_supersets(clauses)
 		clauses = eliminate_unipolar(clauses, props)
@@ -354,19 +419,20 @@ def resolution(clauses, propositions):
 		unit_clauses = []
 		for c in clauses:
 			if len(c) == 1:
-				unit_clauses.append(c)
-				print(c)
+				for i in c:
+					unit_clauses.append(i)
 		print("Unit Clauses:")
 		for uc in unit_clauses:
 			print(uc)
 		while unit_clauses:
 			a = choice(unit_clauses)
-			resolve(a, prop)
+			resolve(a, clauses, props)
+			unit_clauses.remove(a)
 
 		a = choice(list(props))
-		resolve(a, props)
+		resolve(a, clauses, props)
 		print("Clauses at end of loop:")
-		for c in choices:
+		for c in clauses:
 			print(c)
 
 
