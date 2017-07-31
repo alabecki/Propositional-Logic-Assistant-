@@ -9,6 +9,7 @@ from itertools import product
 from itertools import*
 import pprint
 import re
+from sys import*
 from copy import deepcopy
 
 from os import*
@@ -16,37 +17,111 @@ from os import*
 from PLA_functions import*
 
 
-res = base()
+commands = {
+	"1": "Convert the KB to Conjunctive Normal Form (CNF)",
+	"2": "Make Resolution Refutation Query with Respect to the KB",
+	"3": "Get set of Models that satisfy the KB",
+	"4": "Get the set of Models that satisfy a query given KB",
+	"5": "Return"
+}
 
-file = res[0]
-file_name = res[1]
-
-file.seek(0)
-propositions = obtain_atomic_formulas(file)
-file.seek(0)
-
-
-conjunction = conjoin(file)
-print("Conjunction: %s " % (conjunction))
-
-
-form = pre_cnf_to_cnf(conjunction, propositions)
-print("Form: %s " % (form))
+res = {
+	"1": "Just tell me if the query is a consequence of the KB ",
+	"2": "Print all Resolution Steps",
+	"3": "Print only Resolution Steps used in a sucessful refutation"
+}
 
 
-fset = cnf_to_set(form)
-print("fset = %s" % (fset))
 
-#fset = get_sat_input(conjunction, propositions)
-#print("fset: %s " % (fset))
+while True:
+
+	res = base()
+
+	file = res[0]
+	file_name = res[1]
+
+	file.seek(0)
+	print("Formulas in KB:")
+	print("_________________________________________________________________________________\n")
+	for f in file:
+		print (f)
+
+	file.seek(0)
+	propositions = obtain_atomic_formulas(file)
+	print("Propositions:")
+	for p in propositions:
+		print(p)
+	file.seek(0)
 
 
-if resolution(fset, propositions):
-	print("SAT")
-else:
-	print("UNSAT")
+	conjunction = conjoin(file)
+	print("Conjunction: %s " % (conjunction))
 
 
+	form = pre_cnf_to_cnf(conjunction, propositions)
+	print("Form: %s " % (form))
+
+
+	fset = cnf_to_set(form)
+	print("fset = %s" % (fset))
+
+	file.close()
+
+	#fset = get_sat_input(conjunction, propositions)
+	#print("fset: %s " % (fset))
+	while True:
+		com = ""
+		while com not in commands.keys():
+			print("\n")
+			print("What would you like to do?")
+			for c, cmd in commands.items():
+				print(c, cmd)
+			com = input()
+
+		if com == "1":
+			print("The given set of formulas in CNF:\n")
+			print(form)
+			print("\n")
+
+		if com == "2":
+			print("Please input a query \n")
+			query = input()
+			if query != "":
+				mquery = "99 ~(" + query + ")"
+				temp = conjoin(mquery)
+				mquery = temp
+				mquery = pre_cnf_to_cnf(mquery, propositions)
+				mquery = cnf_to_set(mquery)
+				for mq in mquery:
+					mquery = mquery[0]
+					mfset = deepcopy(fset)
+					mfset.append(mquery)
+					print("New clause set: %s" % (mfset))
+
+			if resolution(mfset, propositions):
+				print("\n")
+				print("%s is not entailed by the KB \n" % (query))
+			else:
+				print("\n")
+				print("%s is entailed by the KB \n" % (query))
+
+
+		if com == "3":
+
+			
+			models = satisfiable(conjunction, all_models = True)
+			models = list(models)
+			if models[0] == False:
+				print("The KB is not satisifed by any model\n")
+			else:
+				print("The KB is satisfied by the following models: \n")
+				for m in models:
+					print(m)
+
+
+
+		if com == "5":
+			break
 
 
 
