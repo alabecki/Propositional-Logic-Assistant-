@@ -290,28 +290,17 @@ def conjoin(formulas):			#need to create a new function to add query
 			if f[0].isdigit():
 				#f = f.lstrip()
 				g = ''.join([i for i in f if not i.isdigit()])
-				print(g)
+				#print(g)
 				g = g.lstrip()
 				g = g.rstrip()
-				print("WTF?")
-				print(g)
+				print("Before -> replace: %s" % (g))
 				#g = str(g)
 
 				g = g.replace("->", ">>")
-
-				#while "<->" in g:
-			#		g = re.split(r'<->\s*(?![^()]*\))', g)
-			#		g = "(~" + g[0] + " | " + g[1] + ") & (~" + g[1] + " | " + g[0] + ")"
-			#	while "->" in g:
-			#		g = re.split(r'->\s*(?![^()]*\))', g)
-			#		print("g[0]: %s" % (g[0]))
-			#		print("g[1]: %s " % (g[1]))
-			#		g[0] = "~(" + g[0] + ")"
-			#		g = g[0] + " | " + g[1]
+				print("After -> replace: %s" % (g))
 				
-				print(g)  
 				g = to_cnf(g)
-				print(g)  
+				print("Afrer to_cnf: %s " % (g))  
 
 
 				conjunction = And(conjunction, g)
@@ -319,6 +308,37 @@ def conjoin(formulas):			#need to create a new function to add query
 	conjunction = conjunction.replace("AAA,", "")
 	conjunction = to_cnf(conjunction)
 	return conjunction
+
+
+def add_query(query, propositions, fset, proof, step_tracker):
+	mfset = deepcopy(fset)
+	if query != "":
+		mquery = " ~(" + query + ")"
+		mquery = mquery.lstrip()
+		mquery = mquery.rstrip()
+		print(mquery)
+		mquery = mquery.replace("->", ">>")
+		mquery = to_cnf(mquery)
+		print("query in cnf %s" % (mquery))
+
+		#temp = conjoin(mquery)
+		mquery = pre_cnf_to_cnf(mquery, propositions)		
+		print(mquery)
+		mquery = cnf_to_set(mquery)
+		print("1: %s" % (mquery))
+		#temp = set()
+		count = len(proof.keys()) + 1
+		for item in mquery:
+			print("Item --- %s" % (item))
+
+			mfset.append(item)
+			proof[str(count)] = str(item) + "    Negated Conclusion"
+			step_tracker[str(item)] = str(count)
+			count += 1
+			
+		print("New clause set: %s" % (mfset))
+	return mfset
+	
 
 def eliminate_supersets(clauses):
 	shadow = deepcopy(clauses)
@@ -391,14 +411,20 @@ def find_empty(clauses):
 
 
 def literal_consistancy(clauses, propositions):
+	#print("Remaining Clauses")
+	#	for c in clauses:
+	#		print (c)
 	for p in propositions:
-			np = "~" + str(p)
-			n = set()
-			n.add(np)
-			#print(set(str(p)), n)
-			if set(str(p)) in clauses and n in clauses:
-				print("The set of literals is inconsistant")
-				return False
+		p = str(p)
+		pp = set()
+		pp.add(p)
+		n = "~" + str(p)
+		nn = set()
+		nn.add(n)
+
+		if pp in clauses and nn in clauses:
+			print("The set of literals is inconsistant")
+			return False
 	print("The set of literals is consistant")
 	return True 
 
@@ -410,10 +436,14 @@ def count_negations(a):
 			count += 1
 	return count 
 
-def resolve(a, clauses, props):	
+def resolve(a, clauses, props, proof, step_tracker):
+	print("Step Tracker:")
+	for k, v in step_tracker.items():
+		print(k, v)	
 	trash = []
 	a = str(a)
 	b = ""
+	count = len(proof.keys()) + 1
 	#print("a: %s" % (a))
 	if a.startswith("~"):
 		b = a[1:]
@@ -433,18 +463,21 @@ def resolve(a, clauses, props):
 				minus = {a, b}
 				#print("Minus: %s" % (minus))
 				resolvant = resolvant.difference(minus)
+				proof[str(count)] = str(resolvant) + "    " + str(step_tracker[str(i)]) + " , " + str(step_tracker[str(j)])
+				step_tracker[str(resolvant)] = str(count)
+				count += 1
+				print("   " + str(resolvant) + "\n")
+				clauses.append(resolvant)
+				if i not in trash:
+					trash.append(i)
+				if j not in trash:
+					trash.append(j)
+				
 				if len(resolvant) == 0:
 					print("   {  }    \n")
 					print("The empty clause has been derived")
 					return False
-				else:
-					print("   " + str(resolvant) + "\n")
-					clauses.append(resolvant)
-					if i not in trash:
-						trash.append(i)
-					if j not in trash:
-						trash.append(j)
-
+				
 	print("The resolved clauses are now removed:")
 	for t in trash:
 		print(t)
@@ -459,7 +492,9 @@ def resolve(a, clauses, props):
 	return True
 
 
-def resolution(clauses, propositions):
+def resolution(clauses, propositions, proof, step_tracker):
+	step = len(proof.keys()) + 1
+	
 	print("\n")
 	print("Beginning Resolution Refutation:")
 	print("________________________________")
@@ -472,11 +507,10 @@ def resolution(clauses, propositions):
 		if find_empty(clauses):
 			return False
 		if all_literals(clauses):
-			if literal_consistancy(clauses, props):
-				print("True")
+			if literal_consistancy(clauses, propositions):
 				return True
-			else:
-				return False
+			#else:
+			#	return False
 		clauses = eliminate_tautologies(clauses, props)
 		clauses = eliminate_supersets(clauses)
 		clauses = eliminate_unipolar(clauses, props)
@@ -497,17 +531,18 @@ def resolution(clauses, propositions):
 			print("List of unit clauses:")
 		for uc in unit_clauses:
 			print(uc)
+			print("\n")
 		while unit_clauses:
 			a = choice(unit_clauses)
 			print("%s is chosen \n" % (a))
 			if str(a).startswith("~"):
 				negs = count_negations(a)
-				if negs/2 == 0:
+				if negs % 2 == 0:
 					a = str(a).strip("~")
 				else:
 					a = str(a).strip("~")
 					a = "~" + str(a) 
-			if resolve(a, clauses, props):
+			if resolve(a, clauses, props, proof, step_tracker):
 				unit_clauses.remove(a)
 			else:
 				return False
@@ -516,7 +551,7 @@ def resolution(clauses, propositions):
 			print("and some propositions remain \n")
 			a = choice(list(props))
 			print("%s is chosen for the next round of resolution \n" % (a))
-			res = resolve(a, clauses, props)
+			res = resolve(a, clauses, props, proof, step_tracker)
 			if res == False:
 				return False
 			print("Clauses at end of loop:")

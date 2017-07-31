@@ -84,26 +84,28 @@ while True:
 			print("\n")
 
 		if com == "2":
+			proof = dict()
+			step = 1
+			step_tracker = dict()
+			for c in fset:
+				proof[str(step)] = str(c) + "    Given"
+				step_tracker[str(c)] = str(step)
+				step += 1
+
 			print("Please input a query \n")
 			query = input()
-			if query != "":
-				mquery = "99 ~(" + query + ")"
-				temp = conjoin(mquery)
-				mquery = temp
-				mquery = pre_cnf_to_cnf(mquery, propositions)
-				mquery = cnf_to_set(mquery)
-				for mq in mquery:
-					mquery = mquery[0]
-					mfset = deepcopy(fset)
-					mfset.append(mquery)
-					print("New clause set: %s" % (mfset))
-
-			if resolution(mfset, propositions):
+			mfset = add_query(query, propositions, fset, proof, step_tracker)
+			
+			if resolution(mfset, propositions, proof, step_tracker):
 				print("\n")
 				print("%s is not entailed by the KB \n" % (query))
 			else:
 				print("\n")
 				print("%s is entailed by the KB \n" % (query))
+
+				print("Proof:")
+				for k, v in proof.items():
+					print(k, v)
 
 
 		if com == "3":

@@ -7,6 +7,6 @@
 
 1	hdo -> (wb -> ~hf)
 2	(~hf & ~hdp) -> hwtv
-3	hw -> (~hdp | ~hwtv)
+3	hw -> (~hdp & ~hwtv)
 
 # query - (~hwtv & hdo) -> (wb -> hdp)

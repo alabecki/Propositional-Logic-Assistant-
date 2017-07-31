@@ -53,13 +53,13 @@ for s in basis:
 #print(attempt)
 
 
-var1 = "(~(~p | q) | q) & (~(~p | p) | r) &  (~(~r | s) | ~(~s | q))"
+var1 = "~(p & ~ q) | ~(~a & ~t)"
 print("var1 to cnf: %s" % (to_cnf(var1)))
 var1 = "r & (p | q)"
 print("var1 simp: %s" % (simplify_logic(var1)))
 
 
-var2 = "~p | (q & r)"
+var2 = "~u | (t | (~s & p))"
 print("var1 to cnf: %s" % (to_cnf(var2)))
 var2 = "~p | (q & r)"
 print("var1 simp: %s" % (simplify_logic(var2)))
