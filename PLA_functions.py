@@ -74,6 +74,7 @@ def obtain_atomic_formulas(file):
 			if f[0].isdigit():
 				#f = f.lstrip()
 				g = ''.join([i for i in f if not i.isdigit()])
+				g = g.replace(".", "")
 				g = g.replace("~", "")
 				g = g.replace("&", ",")
 				g = g.replace("|", ",")
@@ -221,6 +222,7 @@ def convert_to_cnf(formulas, propositions):
 	result = ""
 	trans = []
 	h = ""
+	check = []
 	for f in formulas:
 		f = f.lstrip()
 		if f.startswith("#"):
@@ -229,6 +231,7 @@ def convert_to_cnf(formulas, propositions):
 			if f[0].isdigit():
 				#f = f.lstrip()
 				g = ''.join([i for i in f if not i.isdigit()])
+				g = g.replace(".", "")
 				#print(g)
 				g = g.lstrip()
 				g = g.rstrip()
@@ -238,13 +241,18 @@ def convert_to_cnf(formulas, propositions):
 				h = input_to_cnf(h, propositions)
 				h = h.strip()
 				trans.append([g, h])
-				#print("%-15s  %s %s" % (g, " to CNF: ", h))
+				print("%-15s  %s %s" % (g, " to CNF: ", h))
 
 		if result == "":
 			result = h
 		else:
-			result = result + " & " + h
+			if h not in check:
+				result = result + " & " + h
+				check.append(h)
+				print("Result: %s" % (result))
 	return [result, trans] 
+
+
 
 
 
@@ -314,7 +322,6 @@ def cnf_to_set(formula):
 			result.append(addition)
 	return result
 
-	
 
 def build_formula_list(file):
 	lines = []
@@ -367,7 +374,6 @@ def conjoin(formulas):
 				g = to_cnf(g)
 				#print("Afrer to_cnf: %s " % (g)) 
 				#print("%s to CNF: %s" % (f, g)) 
-
 				conjunction = And(conjunction, g)
 	conjunction = str(conjunction)
 	conjunction = conjunction.replace("AAA,", "")
@@ -378,14 +384,20 @@ def conjoin(formulas):
 def add_query(query, propositions, fset, proof, step_tracker):
 	mfset = deepcopy(fset)
 	if query != "":
-		mquery = " ~(" + query + ")"
-		print("%s is added to the KB in order to test for consistancy" % (mquery))
-		mquery = mquery.lstrip()
-		mquery = mquery.rstrip()
+		query = " ~(" + query + ")"
+		query = query.lstrip()
+		query = query.rstrip()
 		#print(mquery)
-		mquery = mquery.replace("->", ">>")
+		mquery = query.replace("->", ">>")
 		#print("mquert after -> replace: %s" % (mquery))
-		mquery = to_cnf(mquery)
+		try: 
+			mquery = to_cnf(mquery)
+		except SyntaxError:
+			print("The input was not a well formed function")
+			query = input("Please try again")
+			mfset =add_query(query, propositions, fset, proof, step_tracker)
+			return mfset
+
 		#print("query in cnf %s" % (mquery))
 		mquery = pre_cnf_to_cnf(mquery, propositions)		
 		mquery = cnf_to_set(mquery)
@@ -401,6 +413,8 @@ def add_query(query, propositions, fset, proof, step_tracker):
 		#print("Step tracker at end of add_query")
 		#for step in step_tracker:
 		#	print(step)
+		print("%s is added to the KB in order to test for consistancy" % (mquery))
+
 	return mfset
 	
 def setup_proof_tracking(fset):

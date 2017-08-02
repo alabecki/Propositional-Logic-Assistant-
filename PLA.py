@@ -38,7 +38,7 @@ commands = {
 	"1": "Convert the KB to Conjunctive Normal Form (CNF)",
 	"2": "Make Resolution Refutation Query with Respect to the KB",
 	"3": "Get set of Models that satisfy the KB",
-	"4": "Get the set of Models that satisfy a query given KB",
+	"4": "Get the set of Models that satisfy a query given the KB",
 	"5": "Return"
 }
 
@@ -46,7 +46,7 @@ resol = {
 	"1": "Just tell me if the query is a consequence of the KB ",
 	"2": "Show the Resolution Proof",
 	"3": "Show the whole Diagnostic",
-	"4": "Show both the Resolution Proof and the Diagnostic"
+	"4": "Show both the Resolution Proof and the Diagnostic",
 }
 
 
@@ -73,10 +73,8 @@ while True:
 	#	print(p)
 	file.seek(0)
 
-
 	#conjunction = conjoin(file)
 	#print("Conjunction: %s " % (conjunction))
-
 
 	#form = pre_cnf_to_cnf(conjunction, propositions)
 	#print("Form: %s " % (form))
@@ -117,8 +115,19 @@ while True:
 			proof = set_up[0]
 			step_tracker = set_up[1]
 			print("Please input a query \n")
-			query = input()
-			mfset = add_query(query, propositions, fset, proof, step_tracker)
+			while True:
+				query = input()
+				try:
+					mfset = add_query(query, propositions, fset, proof, step_tracker)
+					break
+				except TypeError: 
+					print("The input contained characters that are neither alphabetic nor booleans operators.")
+					print("Please try again...")
+				except SyntaxError:
+					print("The input was not a well-formed formula.")
+					print("Please try again...")
+
+
 			opt = ""
 			while opt not in resol.keys():
 				print("\n")
@@ -176,9 +185,12 @@ while True:
 
 					print("(Scroll up to view diagnosis)")
 
+			if opt == "5":
+				print("... ")
+
 		if com == "3":
 			
-			models = satisfiable(conjunction, all_models = True)
+			models = satisfiable(form, all_models = True)
 			models = list(models)
 			if models[0] == False:
 				print("The KB is not satisfied by any model\n")
@@ -186,6 +198,21 @@ while True:
 				print("The KB is satisfied by the following models: \n")
 				for m in models:
 					print(m)
+
+		if com == "4":
+			print("Please input a query...")
+			query = input()
+			query = query.replace("->", ">>")
+			augment = form + "&" + query
+			models = satisfiable(augment, all_models = True)
+			models = list(models)
+			if models[0] == False:
+				print("The KB augmented by %s is not satisfied by any model\n" % (query))
+			else:
+				print("The KB is satisfied by the following models: \n")
+				for m in models:
+					print(m)
+
 
 
 
