@@ -1,0 +1,12 @@
+# hdo = Henry has the day off
+# wb = the weather is bad
+# hf = Henry is fishing
+# hdp = Henry is drinking at a Pub
+# hwtv = Henry watches TV
+# hw =Henry is working
+
+1	hdo -> (wb -> ~hf)
+2	(~hf & ~hdp) -> hwtv
+3	hw -> (~hdp & ~hwtv)
+
+# query - (~hwtv & hdo) -> (wb -> hdp)

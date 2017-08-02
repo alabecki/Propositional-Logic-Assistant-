@@ -108,7 +108,7 @@ def all_literals(formulas):
 	for f in formulas:
 		if len(f) != 1:
 			return False
-	print("All remaining clauses are literals")
+	#print("All remaining clauses are literals")
 	return True
 
 def contains_empty(formulas):
@@ -151,10 +151,10 @@ def get_sat_input(formula, propositions):
 	t1 = formula.split("&")
 	shadow = deepcopy(t1)
 	for t2 in t1:
-		print("t2 %s" % (t2))
+		#print("t2 %s" % (t2))
 		if t2.startswith("And"):
 			t2 = pre_cnf_to_cnf(t2, propositions)
-			print("t2 after: %s" % (t2))
+			#print("t2 after: %s" % (t2))
 			for t3 in t2:
 				shadow.append(t3)
 
@@ -167,7 +167,7 @@ def get_sat_input(formula, propositions):
 		t2 = t2.replace(")", "")
 	
 		for t3 in t2:
-			print
+			#print
 			t3 = t3.strip()
 			t3 = t3.split(",")
 			add = set()
@@ -175,31 +175,26 @@ def get_sat_input(formula, propositions):
 				i = i.strip()
 				add.add(i)
 		result.append(add)
-	print(len(result))
+	#print(len(result))
 	return result
 
 
-
-def pre_cnf_to_cnf(formula, propositions):
-	temp = to_cnf(formula)
-	temp = str(temp)
-	print("temp: %s" % (temp))
+def input_to_cnf(formula, propositions):
+	g = to_cnf(formula)
+	temp = str(g)
 	if temp.startswith("And"):
 		temp = temp.replace("And", "")
 		temp = temp[1:]
 		temp = temp[:-1]
-	print(temp)
 	temp = temp.split("Or")
 	result = ""
 	check = []
 	for t in temp:
-		print("t %s" % (t))
 		for p in propositions:
 			if "Not(" + str(p) + ")" in t:
 				bef = "Not(" + str(p) + ")"
 				aft = "~" + str(p)
 				t = t.replace(bef, aft)
-				print("t: %s " % (t))
 		t = t.strip()
 		if t.endswith(","):
 			t = t[:-1]
@@ -213,12 +208,85 @@ def pre_cnf_to_cnf(formula, propositions):
 				if "~" + str(p) in item:
 					if "(" + str(p) in item or " " + str(p) in item or "|"+str(p) in item:
 						flag = False
-			print (flag)
 			if flag == False:
 				continue
 			if item not in check:
 				result = result + " & " + item
-				print("add item: %s" % (item))
+				check.append(item)
+	result = result.replace("&", "", 1)
+	return(result)
+
+
+def convert_to_cnf(formulas, propositions):
+	result = ""
+	trans = []
+	h = ""
+	for f in formulas:
+		f = f.lstrip()
+		if f.startswith("#"):
+			continue
+		if len(f) >= 1:
+			if f[0].isdigit():
+				#f = f.lstrip()
+				g = ''.join([i for i in f if not i.isdigit()])
+				#print(g)
+				g = g.lstrip()
+				g = g.rstrip()
+				#print("Before -> replace: %s" % (g))
+				h = g.replace("->", ">>")
+				#print("After -> replace: %s" % (g))
+				h = input_to_cnf(h, propositions)
+				h = h.strip()
+				trans.append([g, h])
+				#print("%-15s  %s %s" % (g, " to CNF: ", h))
+
+		if result == "":
+			result = h
+		else:
+			result = result + " & " + h
+	return [result, trans] 
+
+
+
+def pre_cnf_to_cnf(formula, propositions):
+	temp = to_cnf(formula)
+	temp = str(temp)
+	#print("temp: %s" % (temp))
+	if temp.startswith("And"):
+		temp = temp.replace("And", "")
+		temp = temp[1:]
+		temp = temp[:-1]
+	#print(temp)
+	temp = temp.split("Or")
+	result = ""
+	check = []
+	for t in temp:
+		#print("t %s" % (t))
+		for p in propositions:
+			if "Not(" + str(p) + ")" in t:
+				bef = "Not(" + str(p) + ")"
+				aft = "~" + str(p)
+				t = t.replace(bef, aft)
+				#print("t: %s " % (t))
+		t = t.strip()
+		if t.endswith(","):
+			t = t[:-1]
+		t = t.replace(",", " |")
+		if t == "" or t == " ":
+			continue
+		t = re.split(r'\|\s*(?![^()]*\))', t)
+		for item in t:
+			flag = True
+			for prop in propositions:
+				if "~" + str(p) in item:
+					if "(" + str(p) in item or " " + str(p) in item or "|"+str(p) in item:
+						flag = False
+			#print (flag)
+			if flag == False:
+				continue
+			if item not in check:
+				result = result + " & " + item
+				#print("add item: %s" % (item))
 				check.append(item)
 	result = result.replace("&", "", 1)
 	return(result)
@@ -231,7 +299,7 @@ def cnf_to_set(formula):
 	formula = formula.split("&")
 	for f in formula:
 		addition = set()
-		print("Item: %s " % (f))
+		#print("Item: %s " % (f))
 		f = str(f)
 		if "|" not in f:
 			f = f.strip()
@@ -239,7 +307,7 @@ def cnf_to_set(formula):
 		else:
 			f = f.split("|")
 			for i in f:
-				print(i)
+				#print(i)
 				i = i.strip()
 				addition.add(i)
 		if addition not in result:
@@ -263,7 +331,7 @@ def build_res_set(flist, props):
 		for ch in f:
 			ch = Symbol(ch)
 		f = to_cnf(f)
-		print("to cnf: %s __________________________________________---" % (f))
+		#print("to cnf: %s ____________________________________________" % (f))
 		res = pre_cnf_to_cnf(f, props)
 		res = res.replace("(", "")
 		res = res.replace(")", "")
@@ -278,8 +346,8 @@ def build_res_set(flist, props):
 	return basis
 
 
-def conjoin(formulas):			#need to create a new function to add query
-	print(formulas)
+def conjoin(formulas):		
+	#print(formulas)
 	AAA = Symbol("AAA")
 	conjunction = AAA
 	for f in formulas:
@@ -293,15 +361,12 @@ def conjoin(formulas):			#need to create a new function to add query
 				#print(g)
 				g = g.lstrip()
 				g = g.rstrip()
-				print("Before -> replace: %s" % (g))
-				#g = str(g)
-
+				#print("Before -> replace: %s" % (g))
 				g = g.replace("->", ">>")
-				print("After -> replace: %s" % (g))
-				
+				#print("After -> replace: %s" % (g))
 				g = to_cnf(g)
-				print("Afrer to_cnf: %s " % (g))  
-
+				#print("Afrer to_cnf: %s " % (g)) 
+				#print("%s to CNF: %s" % (f, g)) 
 
 				conjunction = And(conjunction, g)
 	conjunction = str(conjunction)
@@ -314,43 +379,52 @@ def add_query(query, propositions, fset, proof, step_tracker):
 	mfset = deepcopy(fset)
 	if query != "":
 		mquery = " ~(" + query + ")"
+		print("%s is added to the KB in order to test for consistancy" % (mquery))
 		mquery = mquery.lstrip()
 		mquery = mquery.rstrip()
-		print(mquery)
+		#print(mquery)
 		mquery = mquery.replace("->", ">>")
+		#print("mquert after -> replace: %s" % (mquery))
 		mquery = to_cnf(mquery)
-		print("query in cnf %s" % (mquery))
-
-		#temp = conjoin(mquery)
+		#print("query in cnf %s" % (mquery))
 		mquery = pre_cnf_to_cnf(mquery, propositions)		
-		print(mquery)
 		mquery = cnf_to_set(mquery)
-		print("1: %s" % (mquery))
+		#print("1: %s" % (mquery))
 		#temp = set()
 		count = len(proof.keys()) + 1
 		for item in mquery:
-			print("Item --- %s" % (item))
-
+			#print("Item --- %s" % (item))
 			mfset.append(item)
-			proof[str(count)] = str(item) + "    Negated Conclusion"
+			proof[str(count)] = [str(item), "Negated Conclusion"]
 			step_tracker[str(item)] = str(count)
 			count += 1
-			
-		print("New clause set: %s" % (mfset))
+		#print("Step tracker at end of add_query")
+		#for step in step_tracker:
+		#	print(step)
 	return mfset
 	
+def setup_proof_tracking(fset):
+	proof = dict()
+	step = 1
+	step_tracker = dict()
+	for c in fset:
+		proof[str(step)] = [str(c), "Given"]
+		step_tracker[str(c)] = str(step)
+		step += 1
+	return [proof, step_tracker]
 
-def eliminate_supersets(clauses):
+def eliminate_supersets(clauses, d):
 	shadow = deepcopy(clauses)
 	for i in clauses:
 		for j in clauses:
 			if i.issubset(j) and i != j:
 				if j in shadow:
-					print("%s is eliminated because it is a superset of %s " % (j, i))
+					if d == 1:
+						print("%s is eliminated because it is a superset of %s " % (j, i))
 					shadow.remove(j)
 	return shadow
 
-def eliminate_unipolar(clauses, propositions):
+def eliminate_unipolar(clauses, propositions, d):
 	shadow = deepcopy(clauses)
 	props = deepcopy(propositions)
 	for p in propositions:
@@ -365,33 +439,36 @@ def eliminate_unipolar(clauses, propositions):
 				#print("%s false in %s " % (p, c))
 				f_flag = True 
 		if t_flag == True and f_flag == False:
-			print("%s is always true, so all clauses containing %s will be eliminated" % (p, p))
+			if d == 1:
+				print("%s is always true, so all clauses containing %s will be eliminated" % (p, p))
 			if p in props:
 				props.discard(p)
 			for c in clauses:
 				if str(p) in c and c in shadow:
-					print("Eliminating %s" % (c))
+					#print("Eliminating %s" % (c))
 					shadow.remove(c)
 		if t_flag == False and f_flag == True:
-			print("%s is always false, so all clauses containing %s will be eliminated" % (p, p))
+			if d == true:
+				print("%s is always false, so all clauses containing %s will be eliminated" % (p, p))
 			if p in props:
 				props.discard(p)
 			for c in clauses:
 				if "~" + str(p) in c and c in shadow:
-					print("Eliminating %s" % (c))
+					#print("Eliminating %s" % (c))
 					shadow.remove(c)
 
 	return shadow
 
 
-def eliminate_tautologies(clauses, propositions):
+def eliminate_tautologies(clauses, propositions, d):
 	shadow = deepcopy(clauses)
 	for p in propositions:
 		for c in clauses:
 			if str(p) in c and "~" + str(p) in c:
 				#print("tautology %s" % (c))
 				if c in shadow:
-					print("%s is removed because it is a tautology" % (c))
+					if d == 1:
+						print("%s is removed because it is a tautology" % (c))
 					shadow.remove(c)
 	return shadow
 
@@ -404,16 +481,13 @@ def get_atom(literal):
 def find_empty(clauses):
 	for c in clauses:
 		if len(c) == 0 or "False" in c:
-			print("Empty clause found: %s" % ())
 			return True
 	return False
 
 
 
 def literal_consistancy(clauses, propositions):
-	#print("Remaining Clauses")
-	#	for c in clauses:
-	#		print (c)
+
 	for p in propositions:
 		p = str(p)
 		pp = set()
@@ -421,11 +495,10 @@ def literal_consistancy(clauses, propositions):
 		n = "~" + str(p)
 		nn = set()
 		nn.add(n)
-
 		if pp in clauses and nn in clauses:
-			print("The set of literals is inconsistant")
+			#print("The set of literals is inconsistant")
 			return False
-	print("The set of literals is consistant")
+	#print("The set of literals is consistant")
 	return True 
 
 def count_negations(a):
@@ -436,10 +509,7 @@ def count_negations(a):
 			count += 1
 	return count 
 
-def resolve(a, clauses, props, proof, step_tracker):
-	print("Step Tracker:")
-	for k, v in step_tracker.items():
-		print(k, v)	
+def resolve(a, clauses, props, proof, step_tracker, d):
 	trash = []
 	a = str(a)
 	b = ""
@@ -449,24 +519,26 @@ def resolve(a, clauses, props, proof, step_tracker):
 		b = a[1:]
 	else:
 		b = "~" + a
-
 	for i in clauses:
 		#print(i)
 		for j in clauses:
 			#print(j)
 			if a in i and b in j:
-				print(str(i) + " is to be resolved with " + str(j) + ": ")
 				resolvant = i.union(j)
-				print("\n")
-				print("   " + str(resolvant))
-				print("______________________________")
 				minus = {a, b}
-				#print("Minus: %s" % (minus))
+				if d == 1:
+					print(str(i) + " is to be resolved with " + str(j) + ": ")
+					print("\n")
+					print("   " + str(resolvant))
+					print("______________________________")
 				resolvant = resolvant.difference(minus)
-				proof[str(count)] = str(resolvant) + "    " + str(step_tracker[str(i)]) + " , " + str(step_tracker[str(j)])
+				proof[str(count)] = [str(resolvant), str(step_tracker[str(i)]) + ", " + str(step_tracker[str(j)])]
 				step_tracker[str(resolvant)] = str(count)
 				count += 1
-				print("   " + str(resolvant) + "\n")
+				if len(resolvant) == 0 and d == 1:
+					print("    {  }    \n")
+				if d == 1:
+					print("   " + str(resolvant) + "\n")
 				clauses.append(resolvant)
 				if i not in trash:
 					trash.append(i)
@@ -474,55 +546,63 @@ def resolve(a, clauses, props, proof, step_tracker):
 					trash.append(j)
 				
 				if len(resolvant) == 0:
-					print("   {  }    \n")
-					print("The empty clause has been derived")
+					#print("   {  }    \n")
+					if d == 1:
+						print("The empty clause has been derived")
 					return False
-				
-	print("The resolved clauses are now removed:")
+	if d == 1:			
+		print("The resolved clauses are now removed:")
 	for t in trash:
-		print(t)
+		if d == 1:
+			print(t)
 		clauses.remove(t)
-	print("\n")
 	a = get_atom(a)
 	a = Symbol(a)
 	#print(a)
 	if a in props:
-		print("%s is removed from the set of Propositions\n" % (a))
+		if d == 1:
+			print("\n")
+			print("%s is removed from the set of Propositions\n" % (a))
 		props.remove(a)
 	return True
 
 
+
+
 def resolution(clauses, propositions, proof, step_tracker):
 	step = len(proof.keys()) + 1
-	
 	print("\n")
+	print("________________________________")
 	print("Beginning Resolution Refutation:")
 	print("________________________________")
 	props = deepcopy(propositions)
 	while True:
-
+		num_clauses = len(clauses)
 		print("Clauses at start of the round:")
 		for c in clauses:
 			print(c)
 		if find_empty(clauses):
+			print("Empty clause found: %s" % ())
 			return False
 		if all_literals(clauses):
+			print("All remaining clauses are literals")
+
 			if literal_consistancy(clauses, propositions):
+				print("The set of literals is consistant")
+
 				return True
-			#else:
-			#	return False
-		clauses = eliminate_tautologies(clauses, props)
-		clauses = eliminate_supersets(clauses)
-		clauses = eliminate_unipolar(clauses, props)
+		clauses = eliminate_tautologies(clauses, props, 1)
+		clauses = eliminate_supersets(clauses, 1)
+		clauses = eliminate_unipolar(clauses, props, 1)
 		if len(clauses) == 0:
 			return True
-		print("Clauses after preliminaries:")
-		for c in clauses:
-			print(c)
+		if len(clauses) < num_clauses:
+			print("Clauses after preliminaries:")
+			for c in clauses:
+				print(c)
 		unit_clauses = []
 		for c in clauses:
 			if len(c) == 1:
-				#print("%s has len 1" % (c))
 				for i in c:
 					unit_clauses.append(i)
 		print("Now onto employment of the Resolution Rule:")
@@ -531,7 +611,7 @@ def resolution(clauses, propositions, proof, step_tracker):
 			print("List of unit clauses:")
 		for uc in unit_clauses:
 			print(uc)
-			print("\n")
+		#print("\n")
 		while unit_clauses:
 			a = choice(unit_clauses)
 			print("%s is chosen \n" % (a))
@@ -542,27 +622,70 @@ def resolution(clauses, propositions, proof, step_tracker):
 				else:
 					a = str(a).strip("~")
 					a = "~" + str(a) 
-			if resolve(a, clauses, props, proof, step_tracker):
+			if resolve(a, clauses, props, proof, step_tracker, 1):
 				unit_clauses.remove(a)
 			else:
 				return False
 		if props:
 			print("There are currently no unit clauses from which to choose")
-			print("and some propositions remain \n")
+			print("and the following propositions remain: \n")
+			print("Remaining Propositions:")
+			for p in props:
+				print(p)
 			a = choice(list(props))
-			print("%s is chosen for the next round of resolution \n" % (a))
-			res = resolve(a, clauses, props, proof, step_tracker)
+			print("%s is chosen" % (a))
+			res = resolve(a, clauses, props, proof, step_tracker, 1)
 			if res == False:
 				return False
 			print("Clauses at end of loop:")
 			for c in clauses:
 				print(c)
+			print("______________________________________________")
 		else:
 			return True
 
 
-
-
+def resolution_no_diagonsis(clauses, propositions, proof, step_tracker):
+	step = len(proof.keys()) + 1
+	props = deepcopy(propositions)
+	while True:
+		if find_empty(clauses):
+			return False
+		if all_literals(clauses):
+			if literal_consistancy(clauses, propositions):
+				return True
+		clauses = eliminate_tautologies(clauses, props, 0)
+		clauses = eliminate_supersets(clauses, 0)
+		clauses = eliminate_unipolar(clauses, props, 0)
+		if len(clauses) == 0:
+			return True
+		
+		unit_clauses = []
+		for c in clauses:
+			if len(c) == 1:
+				#print("%s has len 1" % (c))
+				for i in c:
+					unit_clauses.append(i)			
+		while unit_clauses:
+			a = choice(unit_clauses)
+			if str(a).startswith("~"):
+				negs = count_negations(a)
+				if negs % 2 == 0:
+					a = str(a).strip("~")
+				else:
+					a = str(a).strip("~")
+					a = "~" + str(a) 
+			if resolve(a, clauses, props, proof, step_tracker, 0):
+				unit_clauses.remove(a)
+			else:
+				return False
+		if props:
+			a = choice(list(props))
+			res = resolve(a, clauses, props, proof, step_tracker, 0)
+			if res == False:
+				return False
+		else:
+			return True
 
 
 
