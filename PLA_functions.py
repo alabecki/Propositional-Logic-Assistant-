@@ -147,7 +147,7 @@ def matched(st, start):
 	return 0
 
 def get_sat_input(formula, propositions):
-	print("Initial formula : %s" % (formula))
+	#print("Initial formula : %s" % (formula))
 	result = []
 	t1 = formula.split("&")
 	shadow = deepcopy(t1)
@@ -241,7 +241,7 @@ def convert_to_cnf(formulas, propositions):
 				h = input_to_cnf(h, propositions)
 				h = h.strip()
 				trans.append([g, h])
-				print("%-15s  %s %s" % (g, " to CNF: ", h))
+				#print("%-15s  %s %s" % (g, " to CNF: ", h))
 
 		if result == "":
 			result = h
@@ -249,7 +249,7 @@ def convert_to_cnf(formulas, propositions):
 			if h not in check:
 				result = result + " & " + h
 				check.append(h)
-				print("Result: %s" % (result))
+				#print("Result: %s" % (result))
 	return [result, trans] 
 
 
@@ -413,7 +413,13 @@ def add_query(query, propositions, fset, proof, step_tracker):
 		#print("Step tracker at end of add_query")
 		#for step in step_tracker:
 		#	print(step)
-		print("%s is added to the KB in order to test for consistancy" % (mquery))
+		if len(mquery) == 1:
+			print("%s is added to the KB to test for consistancy" % (mquery[0]))
+		if len(mquery) > 1:
+			print("The following clauses are added to the KB to test for consistancy: ")
+			for pq in mquery:
+				print(pq)
+		#print("New mfset: %s" % (mfset))
 
 	return mfset
 	
@@ -501,7 +507,6 @@ def find_empty(clauses):
 
 
 def literal_consistancy(clauses, propositions):
-
 	for p in propositions:
 		p = str(p)
 		pp = set()
@@ -524,6 +529,11 @@ def count_negations(a):
 	return count 
 
 def resolve(a, clauses, props, proof, step_tracker, d):
+	print("Current step tracker:_____________")
+	for step in step_tracker.keys():
+		print(step)
+	print("__________________________________")
+
 	trash = []
 	a = str(a)
 	b = ""
@@ -546,9 +556,16 @@ def resolve(a, clauses, props, proof, step_tracker, d):
 					print("   " + str(resolvant))
 					print("______________________________")
 				resolvant = resolvant.difference(minus)
-				proof[str(count)] = [str(resolvant), str(step_tracker[str(i)]) + ", " + str(step_tracker[str(j)])]
-				step_tracker[str(resolvant)] = str(count)
-				count += 1
+				while True:
+					try:
+						first = str(i)
+						second = str(j)
+						proof[str(count)] = [str(resolvant), str(step_tracker[first]) + ", " + str(step_tracker[second])]
+						step_tracker[str(resolvant)] = str(count)
+						count += 1
+						break
+					except KeyError:
+						continue
 				if len(resolvant) == 0 and d == 1:
 					print("    {  }    \n")
 				if d == 1:
@@ -570,7 +587,11 @@ def resolve(a, clauses, props, proof, step_tracker, d):
 		if d == 1:
 			print(t)
 		clauses.remove(t)
-	a = get_atom(a)
+	if d == 1:
+		print("Remaining Clauses:")
+		for c in clauses:
+			print(c)
+	#a = get_atom(a)
 	a = Symbol(a)
 	#print(a)
 	if a in props:
@@ -580,16 +601,34 @@ def resolve(a, clauses, props, proof, step_tracker, d):
 		props.remove(a)
 	return True
 
-
-
+def update_unit_clauses(clauses):
+	unit_clauses = []
+	for c in clauses:
+		if len(c) == 1:
+			for i in c:
+				unit_clauses.append(i)
+	return unit_clauses
 
 def resolution(clauses, propositions, proof, step_tracker):
 	step = len(proof.keys()) + 1
 	print("\n")
-	print("________________________________")
+	print("################################\n")
 	print("Beginning Resolution Refutation:")
-	print("________________________________")
+	print("################################")
 	props = deepcopy(propositions)
+	negated_conclusion = []
+	for k, v in proof.items():
+		#print(v[1])
+		if v[1] == "Negated Conclusion":
+			for p in propositions:
+				if "~" + str(p) in str(v[0]):
+					negated_conclusion.append("~" + str(p))
+				elif str(p) in str(v[0]):
+					negated_conclusion.append(str(p))
+
+	print("Negated Conclusion Items")
+	for nc in negated_conclusion:
+		print(nc)
 	while True:
 		num_clauses = len(clauses)
 		print("Clauses at start of the round:")
@@ -614,49 +653,86 @@ def resolution(clauses, propositions, proof, step_tracker):
 			print("Clauses after preliminaries:")
 			for c in clauses:
 				print(c)
-		unit_clauses = []
-		for c in clauses:
-			if len(c) == 1:
-				for i in c:
-					unit_clauses.append(i)
-		print("Now onto employment of the Resolution Rule:")
-		if len(unit_clauses) > 0:
-			print("It is preferble to begin with unit clauses")
-			print("List of unit clauses:")
+		
+		
+		unit_clauses = update_unit_clauses(clauses)
+		print("Unit Clauses:")
 		for uc in unit_clauses:
 			print(uc)
-		#print("\n")
-		while unit_clauses:
-			a = choice(unit_clauses)
-			print("%s is chosen \n" % (a))
-			if str(a).startswith("~"):
-				negs = count_negations(a)
-				if negs % 2 == 0:
-					a = str(a).strip("~")
+
+		print("Employment of the Resolution Rule:")
+
+		#negated_unit = [list(filter(lambda x: x in negated_conclusion, sublist)) for sublist in unit_clauses]
+		#negated_unit = set(negated_conclusion).intersection(set(unit_clauses))
+		negated_unit = []
+		for nc in negated_conclusion:
+			#print("nc: %s" % (nc))
+			for uc in unit_clauses:
+				#print("uc: %s" % (uc))
+				if nc == uc:
+					negated_unit.append(nc)
+		print("Negated Units:")
+		for nu in negated_unit:
+			print(nu)
+		while True:
+			if len(negated_unit) > 0:
+				a = choice(negated_unit)
+				print("%s is both a unit clause and occurs in the negated conclusion, so it is an ideal choice:" % (a))
+				if str(a).startswith("~"):
+					negs = count_negations(a)
+					if negs % 2 == 0:
+						a = str(a).strip("~")
+					else:
+						a = str(a).strip("~")
+						a = "~" + str(a) 
+				if resolve(a, clauses, props, proof, step_tracker, 1):
+					negated_unit.remove(a)
+					if a in negated_conclusion:
+						negated_conclusion.remove(a)
+					unit_clauses = update_unit_clauses(clauses)
 				else:
-					a = str(a).strip("~")
-					a = "~" + str(a) 
-			if resolve(a, clauses, props, proof, step_tracker, 1):
-				unit_clauses.remove(a)
+					return False
+			elif len(unit_clauses) > 0:
+				a = choice(unit_clauses)
+				print("%s is chosen from the remaining unit clauses \n" % (a))
+				if str(a).startswith("~"):
+					negs = count_negations(a)
+					if negs % 2 == 0:
+						a = str(a).strip("~")
+					else:
+						a = str(a).strip("~")
+						a = "~" + str(a) 
+				if resolve(a, clauses, props, proof, step_tracker, 1):
+					unit_clauses = update_unit_clauses(clauses)
+
+				else:
+					return False
+
+			elif len(negated_conclusion) > 0:
+				a = choice(negated_conclusion)
+				print("%s is chosen because it is found in the negation of the conclusion" % (a))
+				if str(a).startswith("~"):
+					negs = count_negations(a)
+					if negs % 2 == 0:
+						a = str(a).strip("~")
+					else:
+						a = str(a).strip("~")
+						a = "~" + str(a) 
+				if resolve(a, clauses, props, proof, step_tracker, 1):
+					negated_conclusion.remove(a)
+					unit_clauses = update_unit_clauses(clauses)
+				else:
+					return False
+
+			elif len(props) > 0:
+				a = choice(list(props))
+				print("%s is chosen" % (a))
+				res = resolve(a, clauses, props, proof, step_tracker, 1)
+				unit_clauses = update_unit_clauses(clauses)
+				if res == False:
+					return False
 			else:
-				return False
-		if props:
-			print("There are currently no unit clauses from which to choose")
-			print("and the following propositions remain: \n")
-			print("Remaining Propositions:")
-			for p in props:
-				print(p)
-			a = choice(list(props))
-			print("%s is chosen" % (a))
-			res = resolve(a, clauses, props, proof, step_tracker, 1)
-			if res == False:
-				return False
-			print("Clauses at end of loop:")
-			for c in clauses:
-				print(c)
-			print("______________________________________________")
-		else:
-			return True
+				return True
 
 
 def resolution_no_diagonsis(clauses, propositions, proof, step_tracker):

@@ -64,9 +64,7 @@ print("var1 to cnf: %s" % (to_cnf(var2)))
 var2 = "~p | (q & r)"
 print("var1 simp: %s" % (simplify_logic(var2)))
 
-print("Please input a query ")
-query = input()
-query = pre_cnf_to_cnf(query)
-query = cnf_to_set(query)
 
+if a|b == b|a:
+	print("yes they are!")
 
