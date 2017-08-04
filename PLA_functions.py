@@ -449,9 +449,9 @@ def eliminate_supersets(clauses, d):
 def eliminate_unipolar(clauses, props, d):
 	shadow = deepcopy(clauses)
 	sprops = deepcopy(props)
-	print("sprops:")
-	for sp in sprops:
-		print(sp)
+	#print("sprops:")
+	#for sp in sprops:
+		#print(sp)
 	for p in props:
 		t_flag = False
 		f_flag = False
@@ -471,17 +471,17 @@ def eliminate_unipolar(clauses, props, d):
 				sprops.discard(p)
 			for c in clauses:
 				if str(p) in c and c in shadow:
-					print("Eliminating (T) %s" % (c))
+					print("Eliminating %s" % (c))
 					shadow.remove(c)
 		if t_flag == False and f_flag == True:
 			if d == 1:
-				print("%s is always false, so all clauses containing %s will be eliminated" % (p, p))
-			#if p in sprops:
-			#	print("%s is removed from the list of propositions" % (p))
-			#	sprops.discard(p)
+				print("%s is always false, so all clauses containing ~%s will be eliminated" % (p, p))
+			if p in sprops:
+				print("%s is removed from the list of propositions" % (p))
+				sprops.discard(p)
 			for c in clauses:
 				if "~" + str(p) in c and c in shadow:
-					print("Eliminating (F) %s" % (c))
+					print("Eliminating %s " % (c))
 					shadow.remove(c)
 
 	return [shadow, sprops]
@@ -540,7 +540,6 @@ def resolve(a, clauses, props, proof, step_tracker, d):
 	#for step in step_tracker.keys():
 	#	print(step)
 	#print("__________________________________")
-
 	trash = []
 	a = str(a)
 	b = ""
@@ -597,12 +596,11 @@ def resolve(a, clauses, props, proof, step_tracker, d):
 		print("Remaining Clauses:")
 		for c in clauses:
 			print(c)
-	#a = get_atom(a)
+	a = get_atom(a)
 	a = Symbol(a)
 	#print(a)
 	if a in props:
 		if d == 1:
-			print("\n")
 			print("%s is removed from the set of Propositions\n" % (a))
 		props.remove(a)
 	return True
@@ -680,113 +678,153 @@ def resolution(clauses, propositions, proof, step_tracker):
 				#print("uc: %s" % (uc))
 				if nc == uc:
 					negated_unit.append(nc)
-		print("Negated Units:")
-		for nu in negated_unit:
-			print(nu)
-		while True:
-			if len(negated_unit) > 0:
-				a = choice(negated_unit)
-				print("%s is both a unit clause and occurs in the negated conclusion, so it is an ideal choice:" % (a))
-				if str(a).startswith("~"):
-					negs = count_negations(a)
-					if negs % 2 == 0:
-						a = str(a).strip("~")
-					else:
-						a = str(a).strip("~")
-						a = "~" + str(a) 
-				if resolve(a, clauses, props, proof, step_tracker, 1):
-					negated_unit.remove(a)
-					if a in negated_conclusion:
-						negated_conclusion.remove(a)
-					unit_clauses = update_unit_clauses(clauses)
-					clauses = eliminate_tautologies(clauses, props, 1)
-					clauses = eliminate_supersets(clauses, 1)
-					rest = eliminate_unipolar(clauses, props, 1)
-					clauses = rest[0]
-					props = rest[1]
+		if len(negated_unit) > 0:
+			print("Negated Units:")
+			for nu in negated_unit:
+				print(nu)
+			a = choice(negated_unit)
+			print("%s is both a unit clause and occurs in the negated conclusion, so it is an ideal choice:" % (a))
+			if str(a).startswith("~"):
+				negs = count_negations(a)
+				if negs % 2 == 0:
+					a = str(a).strip("~")
 				else:
-					return False
-			elif len(unit_clauses) > 0:
-				a = choice(unit_clauses)
-				print("%s is chosen from the remaining unit clauses \n" % (a))
-				if str(a).startswith("~"):
-					negs = count_negations(a)
-					if negs % 2 == 0:
-						a = str(a).strip("~")
-					else:
-						a = str(a).strip("~")
-						a = "~" + str(a) 
-				if resolve(a, clauses, props, proof, step_tracker, 1):
-					unit_clauses = update_unit_clauses(clauses)
-					clauses = eliminate_tautologies(clauses, props, 1)
-					clauses = eliminate_supersets(clauses, 1)
-					rest = eliminate_unipolar(clauses, props, 1)
-					clauses = rest[0]
-					props = rest[1]
-
-				else:
-					return False
-
-			elif len(negated_conclusion) > 0:
-				a = choice(negated_conclusion)
-				print("%s is chosen because it is found in the negation of the conclusion" % (a))
-				if str(a).startswith("~"):
-					negs = count_negations(a)
-					if negs % 2 == 0:
-						a = str(a).strip("~")
-					else:
-						a = str(a).strip("~")
-						a = "~" + str(a) 
-				if resolve(a, clauses, props, proof, step_tracker, 1):
+					a = str(a).strip("~")
+					a = "~" + str(a) 
+			if resolve(a, clauses, props, proof, step_tracker, 1):
+				negated_unit.remove(a)
+				if a in negated_conclusion:
 					negated_conclusion.remove(a)
-					unit_clauses = update_unit_clauses(clauses)
-					clauses = eliminate_tautologies(clauses, props, 1)
-					clauses = eliminate_supersets(clauses, 1)
-					rest = eliminate_unipolar(clauses, props, 1)
-					clauses = rest[0]
-					props = rest[1]
-				else:
-					return False
-
-			elif len(props) > 0:
-				a = choice(list(props))
-				print("%s is chosen" % (a))
-				res = resolve(a, clauses, props, proof, step_tracker, 1)
 				unit_clauses = update_unit_clauses(clauses)
 				clauses = eliminate_tautologies(clauses, props, 1)
 				clauses = eliminate_supersets(clauses, 1)
 				rest = eliminate_unipolar(clauses, props, 1)
 				clauses = rest[0]
 				props = rest[1]
-				if res == False:
-					return False
+			else:
+				return False
+		elif len(unit_clauses) > 0:
+			a = choice(unit_clauses)
+			print("%s is chosen from the remaining unit clauses \n" % (a))
+			if str(a).startswith("~"):
+				negs = count_negations(a)
+				if negs % 2 == 0:
+					a = str(a).strip("~")
+				else:
+					a = str(a).strip("~")
+					a = "~" + str(a) 
+			if resolve(a, clauses, props, proof, step_tracker, 1):
+				unit_clauses = update_unit_clauses(clauses)
+				clauses = eliminate_tautologies(clauses, props, 1)
+				clauses = eliminate_supersets(clauses, 1)
+				rest = eliminate_unipolar(clauses, props, 1)
+				clauses = rest[0]
+				props = rest[1]
 
 			else:
-				return True
+				return False
+
+		elif len(negated_conclusion) > 0:
+			a = choice(negated_conclusion)
+			print("%s is chosen because it is found in the negation of the conclusion" % (a))
+			if str(a).startswith("~"):
+				negs = count_negations(a)
+				if negs % 2 == 0:
+					a = str(a).strip("~")
+				else:
+					a = str(a).strip("~")
+					a = "~" + str(a) 
+			if resolve(a, clauses, props, proof, step_tracker, 1):
+				negated_conclusion.remove(a)
+				unit_clauses = update_unit_clauses(clauses)
+				clauses = eliminate_tautologies(clauses, props, 1)
+				clauses = eliminate_supersets(clauses, 1)
+				rest = eliminate_unipolar(clauses, props, 1)
+				clauses = rest[0]
+				props = rest[1]
+			else:
+				return False
+
+		elif len(props) > 0:
+			a = choice(list(props))
+			print("%s is chosen" % (a))
+			res = resolve(a, clauses, props, proof, step_tracker, 1)
+			unit_clauses = update_unit_clauses(clauses)
+			clauses = eliminate_tautologies(clauses, props, 1)
+			clauses = eliminate_supersets(clauses, 1)
+			rest = eliminate_unipolar(clauses, props, 1)
+			clauses = rest[0]
+			props = rest[1]
+			if res == False:
+				return False
+
+		else:
+			return True
 
 
 def resolution_no_diagonsis(clauses, propositions, proof, step_tracker):
 	step = len(proof.keys()) + 1
 	props = deepcopy(propositions)
+	
+	negated_conclusion = []
+	for k, v in proof.items():
+		#print(v[1])
+		if v[1] == "Negated Conclusion":
+			for p in propositions:
+				if "~" + str(p) in str(v[0]):
+					negated_conclusion.append("~" + str(p))
+				elif str(p) in str(v[0]):
+					negated_conclusion.append(str(p))
 	while True:
+		num_clauses = len(clauses)
+	
 		if find_empty(clauses):
 			return False
 		if all_literals(clauses):
+
 			if literal_consistancy(clauses, propositions):
+
 				return True
 		clauses = eliminate_tautologies(clauses, props, 0)
 		clauses = eliminate_supersets(clauses, 0)
-		clauses = eliminate_unipolar(clauses, props, 0)
+		rest = eliminate_unipolar(clauses, props, 0)
+		clauses = rest[0]
+		props = rest[1]
 		if len(clauses) == 0:
 			return True
-		
-		unit_clauses = []
-		for c in clauses:
-			if len(c) == 1:
-				#print("%s has len 1" % (c))
-				for i in c:
-					unit_clauses.append(i)			
-		while unit_clauses:
+
+		unit_clauses = update_unit_clauses(clauses)
+		#negated_unit = [list(filter(lambda x: x in negated_conclusion, sublist)) for sublist in unit_clauses]
+		#negated_unit = set(negated_conclusion).intersection(set(unit_clauses))
+		negated_unit = []
+		for nc in negated_conclusion:
+			#print("nc: %s" % (nc))
+			for uc in unit_clauses:
+				#print("uc: %s" % (uc))
+				if nc == uc:
+					negated_unit.append(nc)
+		if len(negated_unit) > 0:
+			a = choice(negated_unit)
+			if str(a).startswith("~"):
+				negs = count_negations(a)
+				if negs % 2 == 0:
+					a = str(a).strip("~")
+				else:
+					a = str(a).strip("~")
+					a = "~" + str(a) 
+			if resolve(a, clauses, props, proof, step_tracker, 0):
+				negated_unit.remove(a)
+				if a in negated_conclusion:
+					negated_conclusion.remove(a)
+				unit_clauses = update_unit_clauses(clauses)
+				clauses = eliminate_tautologies(clauses, props, 0)
+				clauses = eliminate_supersets(clauses, 0)
+				rest = eliminate_unipolar(clauses, props, 0)
+				clauses = rest[0]
+				props = rest[1]
+			else:
+				return False
+		elif len(unit_clauses) > 0:
 			a = choice(unit_clauses)
 			if str(a).startswith("~"):
 				negs = count_negations(a)
@@ -796,20 +834,50 @@ def resolution_no_diagonsis(clauses, propositions, proof, step_tracker):
 					a = str(a).strip("~")
 					a = "~" + str(a) 
 			if resolve(a, clauses, props, proof, step_tracker, 0):
-				unit_clauses.remove(a)
+				unit_clauses = update_unit_clauses(clauses)
+				clauses = eliminate_tautologies(clauses, props, 0)
+				clauses = eliminate_supersets(clauses, 0)
+				rest = eliminate_unipolar(clauses, props, 0)
+				clauses = rest[0]
+				props = rest[1]
+
 			else:
 				return False
-		if props:
+
+		elif len(negated_conclusion) > 0:
+			a = choice(negated_conclusion)
+			if str(a).startswith("~"):
+				negs = count_negations(a)
+				if negs % 2 == 0:
+					a = str(a).strip("~")
+				else:
+					a = str(a).strip("~")
+					a = "~" + str(a) 
+			if resolve(a, clauses, props, proof, step_tracker, 0):
+				negated_conclusion.remove(a)
+				unit_clauses = update_unit_clauses(clauses)
+				clauses = eliminate_tautologies(clauses, props, 0)
+				clauses = eliminate_supersets(clauses, 0)
+				rest = eliminate_unipolar(clauses, props, 0)
+				clauses = rest[0]
+				props = rest[1]
+			else:
+				return False
+
+		elif len(props) > 0:
 			a = choice(list(props))
 			res = resolve(a, clauses, props, proof, step_tracker, 0)
+			unit_clauses = update_unit_clauses(clauses)
+			clauses = eliminate_tautologies(clauses, props, 0)
+			clauses = eliminate_supersets(clauses, 0)
+			rest = eliminate_unipolar(clauses, props, 0)
+			clauses = rest[0]
+			props = rest[1]
 			if res == False:
 				return False
+
 		else:
 			return True
-
-
-
-
 	
 
 
