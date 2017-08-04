@@ -446,3 +446,46 @@ def resolution(clauses, propositions, proof, step_tracker):
 				return False
 		else:
 			return True
+
+
+def resolution_no_diagonsis(clauses, propositions, proof, step_tracker):
+	step = len(proof.keys()) + 1
+	props = deepcopy(propositions)
+	while True:
+		if find_empty(clauses):
+			return False
+		if all_literals(clauses):
+			if literal_consistancy(clauses, propositions):
+				return True
+		clauses = eliminate_tautologies(clauses, props, 0)
+		clauses = eliminate_supersets(clauses, 0)
+		clauses = eliminate_unipolar(clauses, props, 0)
+		if len(clauses) == 0:
+			return True
+		
+		unit_clauses = []
+		for c in clauses:
+			if len(c) == 1:
+				#print("%s has len 1" % (c))
+				for i in c:
+					unit_clauses.append(i)			
+		while unit_clauses:
+			a = choice(unit_clauses)
+			if str(a).startswith("~"):
+				negs = count_negations(a)
+				if negs % 2 == 0:
+					a = str(a).strip("~")
+				else:
+					a = str(a).strip("~")
+					a = "~" + str(a) 
+			if resolve(a, clauses, props, proof, step_tracker, 0):
+				unit_clauses.remove(a)
+			else:
+				return False
+		if props:
+			a = choice(list(props))
+			res = resolve(a, clauses, props, proof, step_tracker, 0)
+			if res == False:
+				return False
+		else:
+			return True

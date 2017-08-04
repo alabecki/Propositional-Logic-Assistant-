@@ -1,0 +1,6 @@
+1.	a | b | c | ~d
+2.	a | b | c | d
+3.	~b | c
+4.	~a
+
+# prove c

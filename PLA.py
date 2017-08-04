@@ -78,16 +78,15 @@ while True:
 
 	#form = pre_cnf_to_cnf(conjunction, propositions)
 	#print("Form: %s " % (form))
-
 	res2 = convert_to_cnf(file, propositions)
 
 	form = res2[0]
 	trans = res2[1]
 
-	print("Form %s " % (form))
+	#print("Form %s " % (form))
 
 	fset = cnf_to_set(form)
-	print("fset = %s" % (fset))
+	#print("fset = %s" % (fset))
 
 	file.close()
 
@@ -105,8 +104,8 @@ while True:
 		if com == "1":
 			print("The given set of formulas in CNF:\n")
 			for i in trans:
-				print("%-15s to CNF: %s" % (i[0], i[1]))
-			print("In total:")
+				print("%-25s   to CNF:   %s" % (i[0], i[1]))
+			print("Combined:")
 			print(form)
 			print("\n")
 
@@ -121,9 +120,11 @@ while True:
 					mfset = add_query(query, propositions, fset, proof, step_tracker)
 					break
 				except TypeError: 
+					print("\n")
 					print("The input contained characters that are neither alphabetic nor booleans operators.")
 					print("Please try again...")
 				except SyntaxError:
+					print("\n")
 					print("The input was not a well-formed formula.")
 					print("Please try again...")
 
@@ -138,6 +139,7 @@ while True:
 
 			if opt == "1":
 				if resolution_no_diagonsis(mfset, propositions, proof, step_tracker):
+					print("\n")
 					print("%s is not entailed by the KB \n" % (query))
 				else:
 					print("\n")
@@ -145,6 +147,7 @@ while True:
 
 			if opt == "2":
 				if resolution_no_diagonsis(mfset, propositions, proof, step_tracker):
+					print("\n")
 					print("%s is not entailed by the KB \n" % (query))
 				else:
 					print("\n")
@@ -152,12 +155,11 @@ while True:
 					print("Proof:")
 					for k, v in proof.items():
 						if v[0] == "set()":
-							print("%s: %-25s %s" % (k, "{''}", v[1]) )
+							print("%-2s: %-30s %s" % (k, "{''}", v[1]) )
 						else:
-							print("%s: %-25s %s" % (k, v[0], v[1]))
+							print("%-2s: %-30s %s" % (k, v[0], v[1]))
 
 			if opt == "3":
-				
 				if resolution(mfset, propositions, proof, step_tracker):
 					print("%s is not entailed by the KB \n" % (query))
 					print("(Scroll up to view diagnosis)")
@@ -167,9 +169,7 @@ while True:
 					print("%s is entailed by the KB \n" % (query))
 					print("(Scroll up to view diagnosis)")
 
-
-			if opt == "4":
-			
+			if opt == "4":			
 				if resolution(mfset, propositions, proof, step_tracker):
 					print("%s is not entailed by the KB \n" % (query))
 					print("(Scroll up to view diagnosis)")
@@ -179,9 +179,9 @@ while True:
 					print("Proof:")
 					for k, v in proof.items():
 						if v[0] == "set()":
-							print("%s: %-25s %s" % (k, "{''}", v[1]) )
+							print("%-2s: %-30s %s" % (k, "{''}", v[1]) )
 						else:
-							print("%s: %-25s %s" % (k, v[0], v[1]))
+							print("%-2s: %-30s %s" % (k, v[0], v[1]))
 
 					print("(Scroll up to view diagnosis)")
 
@@ -203,7 +203,8 @@ while True:
 			print("Please input a query...")
 			query = input()
 			query = query.replace("->", ">>")
-			augment = form + "&" + query
+			augment = form + "& (" + query + ")"
+			#print("Augment: %s" % (augment))
 			models = satisfiable(augment, all_models = True)
 			models = list(models)
 			if models[0] == False:
@@ -212,8 +213,6 @@ while True:
 				print("The KB is satisfied by the following models: \n")
 				for m in models:
 					print(m)
-
-
 
 
 		if com == "5":

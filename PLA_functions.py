@@ -408,6 +408,7 @@ def add_query(query, propositions, fset, proof, step_tracker):
 			#print("Item --- %s" % (item))
 			mfset.append(item)
 			proof[str(count)] = [str(item), "Negated Conclusion"]
+			item = sorted(item)
 			step_tracker[str(item)] = str(count)
 			count += 1
 		#print("Step tracker at end of add_query")
@@ -429,6 +430,7 @@ def setup_proof_tracking(fset):
 	step_tracker = dict()
 	for c in fset:
 		proof[str(step)] = [str(c), "Given"]
+		c = sorted(c)
 		step_tracker[str(c)] = str(step)
 		step += 1
 	return [proof, step_tracker]
@@ -444,10 +446,13 @@ def eliminate_supersets(clauses, d):
 					shadow.remove(j)
 	return shadow
 
-def eliminate_unipolar(clauses, propositions, d):
+def eliminate_unipolar(clauses, props, d):
 	shadow = deepcopy(clauses)
-	props = deepcopy(propositions)
-	for p in propositions:
+	sprops = deepcopy(props)
+	print("sprops:")
+	for sp in sprops:
+		print(sp)
+	for p in props:
 		t_flag = False
 		f_flag = False
 		#print(len(shadow))
@@ -461,23 +466,25 @@ def eliminate_unipolar(clauses, propositions, d):
 		if t_flag == True and f_flag == False:
 			if d == 1:
 				print("%s is always true, so all clauses containing %s will be eliminated" % (p, p))
-			if p in props:
-				props.discard(p)
+			if p in sprops:
+				print("%s is removed from the list of propositions" % (p))
+				sprops.discard(p)
 			for c in clauses:
 				if str(p) in c and c in shadow:
-					#print("Eliminating %s" % (c))
+					print("Eliminating (T) %s" % (c))
 					shadow.remove(c)
 		if t_flag == False and f_flag == True:
-			if d == true:
+			if d == 1:
 				print("%s is always false, so all clauses containing %s will be eliminated" % (p, p))
-			if p in props:
-				props.discard(p)
+			#if p in sprops:
+			#	print("%s is removed from the list of propositions" % (p))
+			#	sprops.discard(p)
 			for c in clauses:
 				if "~" + str(p) in c and c in shadow:
-					#print("Eliminating %s" % (c))
+					print("Eliminating (F) %s" % (c))
 					shadow.remove(c)
 
-	return shadow
+	return [shadow, sprops]
 
 
 def eliminate_tautologies(clauses, propositions, d):
@@ -529,16 +536,17 @@ def count_negations(a):
 	return count 
 
 def resolve(a, clauses, props, proof, step_tracker, d):
-	print("Current step tracker:_____________")
-	for step in step_tracker.keys():
-		print(step)
-	print("__________________________________")
+	#print("Current step tracker:_____________")
+	#for step in step_tracker.keys():
+	#	print(step)
+	#print("__________________________________")
 
 	trash = []
 	a = str(a)
 	b = ""
 	count = len(proof.keys()) + 1
 	#print("a: %s" % (a))
+	shadow = deepcopy(clauses)
 	if a.startswith("~"):
 		b = a[1:]
 	else:
@@ -556,21 +564,19 @@ def resolve(a, clauses, props, proof, step_tracker, d):
 					print("   " + str(resolvant))
 					print("______________________________")
 				resolvant = resolvant.difference(minus)
-				while True:
-					try:
-						first = str(i)
-						second = str(j)
-						proof[str(count)] = [str(resolvant), str(step_tracker[first]) + ", " + str(step_tracker[second])]
-						step_tracker[str(resolvant)] = str(count)
-						count += 1
-						break
-					except KeyError:
-						continue
+				first = str(sorted(i))
+				second = str(sorted(j))
+				proof[str(count)] = [str(resolvant), str(step_tracker[first]) + ", " + str(step_tracker[second])]
+				item = sorted(resolvant)
+				step_tracker[str(item)] = str(count)
+				count += 1
+				
 				if len(resolvant) == 0 and d == 1:
 					print("    {  }    \n")
 				if d == 1:
 					print("   " + str(resolvant) + "\n")
-				clauses.append(resolvant)
+				if resolvant not in clauses:
+					clauses.append(resolvant)
 				if i not in trash:
 					trash.append(i)
 				if j not in trash:
@@ -616,6 +622,7 @@ def resolution(clauses, propositions, proof, step_tracker):
 	print("Beginning Resolution Refutation:")
 	print("################################")
 	props = deepcopy(propositions)
+	
 	negated_conclusion = []
 	for k, v in proof.items():
 		#print(v[1])
@@ -646,7 +653,9 @@ def resolution(clauses, propositions, proof, step_tracker):
 				return True
 		clauses = eliminate_tautologies(clauses, props, 1)
 		clauses = eliminate_supersets(clauses, 1)
-		clauses = eliminate_unipolar(clauses, props, 1)
+		rest = eliminate_unipolar(clauses, props, 1)
+		clauses = rest[0]
+		props = rest[1]
 		if len(clauses) == 0:
 			return True
 		if len(clauses) < num_clauses:
@@ -690,6 +699,11 @@ def resolution(clauses, propositions, proof, step_tracker):
 					if a in negated_conclusion:
 						negated_conclusion.remove(a)
 					unit_clauses = update_unit_clauses(clauses)
+					clauses = eliminate_tautologies(clauses, props, 1)
+					clauses = eliminate_supersets(clauses, 1)
+					rest = eliminate_unipolar(clauses, props, 1)
+					clauses = rest[0]
+					props = rest[1]
 				else:
 					return False
 			elif len(unit_clauses) > 0:
@@ -704,6 +718,11 @@ def resolution(clauses, propositions, proof, step_tracker):
 						a = "~" + str(a) 
 				if resolve(a, clauses, props, proof, step_tracker, 1):
 					unit_clauses = update_unit_clauses(clauses)
+					clauses = eliminate_tautologies(clauses, props, 1)
+					clauses = eliminate_supersets(clauses, 1)
+					rest = eliminate_unipolar(clauses, props, 1)
+					clauses = rest[0]
+					props = rest[1]
 
 				else:
 					return False
@@ -721,6 +740,11 @@ def resolution(clauses, propositions, proof, step_tracker):
 				if resolve(a, clauses, props, proof, step_tracker, 1):
 					negated_conclusion.remove(a)
 					unit_clauses = update_unit_clauses(clauses)
+					clauses = eliminate_tautologies(clauses, props, 1)
+					clauses = eliminate_supersets(clauses, 1)
+					rest = eliminate_unipolar(clauses, props, 1)
+					clauses = rest[0]
+					props = rest[1]
 				else:
 					return False
 
@@ -729,8 +753,14 @@ def resolution(clauses, propositions, proof, step_tracker):
 				print("%s is chosen" % (a))
 				res = resolve(a, clauses, props, proof, step_tracker, 1)
 				unit_clauses = update_unit_clauses(clauses)
+				clauses = eliminate_tautologies(clauses, props, 1)
+				clauses = eliminate_supersets(clauses, 1)
+				rest = eliminate_unipolar(clauses, props, 1)
+				clauses = rest[0]
+				props = rest[1]
 				if res == False:
 					return False
+
 			else:
 				return True
 

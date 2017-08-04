@@ -1,0 +1,14 @@
+
+
+1. (sunny & warm) -> enjoy
+2. (warm & pleasant) -> strawberry_picking
+3. raining -> ~strawberry_picking
+4. raining -> wet
+5. warm
+6. raining
+7. sunny
+
+
+# proove - ~strawberry_picking
+	enjoy
+	wet 
