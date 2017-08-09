@@ -1,3 +1,5 @@
+
+#/usr/bin/python3
 #Propositional Logic Assistant - Main File
 
 
