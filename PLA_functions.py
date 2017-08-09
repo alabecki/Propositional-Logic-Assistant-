@@ -181,40 +181,50 @@ def get_sat_input(formula, propositions):
 
 
 def input_to_cnf(formula, propositions):
+	#for f in formula:
+	#	f = Symbol(f)
+	#formula = Symbol(formula)
+	formula = formula.strip()
 	g = to_cnf(formula)
+	print("g : %s" % (g))
 	temp = str(g)
-	if temp.startswith("And"):
-		temp = temp.replace("And", "")
-		temp = temp[1:]
-		temp = temp[:-1]
-	temp = temp.split("Or")
-	result = ""
-	check = []
-	for t in temp:
-		for p in propositions:
-			if "Not(" + str(p) + ")" in t:
-				bef = "Not(" + str(p) + ")"
-				aft = "~" + str(p)
-				t = t.replace(bef, aft)
-		t = t.strip()
-		if t.endswith(","):
-			t = t[:-1]
-		t = t.replace(",", " |")
-		if t == "" or t == " ":
-			continue
-		t = re.split(r'\|\s*(?![^()]*\))', t)
-		for item in t:
-			flag = True
-			for prop in propositions:
-				if "~" + str(p) in item:
-					if "(" + str(p) in item or " " + str(p) in item or "|"+str(p) in item:
-						flag = False
-			if flag == False:
+	if "And" not in temp and "Or" not in temp:
+		result = "(" + temp + ")"
+	else:
+		if temp.startswith("And"):
+			temp = temp.replace("And", "")
+			temp = temp[1:]
+			temp = temp[:-1]
+		temp = temp.split("Or")
+		result = ""
+		check = []
+		for t in temp:
+			for p in propositions:
+				if "Not(" + str(p) + ")" in t:
+					bef = "Not(" + str(p) + ")"
+					aft = "~" + str(p)
+					t = t.replace(bef, aft)
+			t = t.strip()
+			if t.endswith(","):
+				t = t[:-1]
+			t = t.replace(",", " |")
+			print("t: %s" % (t))
+			if t == "" or t == " ":
 				continue
-			if item not in check:
-				result = result + " & " + item
-				check.append(item)
-	result = result.replace("&", "", 1)
+			t = re.split(r'\|\s*(?![^()]*\))', t)
+			for item in t:
+				flag = True
+				for prop in propositions:
+					if "~" + str(p) in item:
+						if "(" + str(p) in item or " " + str(p) in item or "|"+str(p) in item:
+							flag = False
+				if flag == False:
+					continue
+				if item not in check:
+					result = result + " & " + item
+					check.append(item)
+		result = result.replace("&", "", 1)
+	print("Result: %s" % (result))
 	return(result)
 
 
@@ -235,9 +245,9 @@ def convert_to_cnf(formulas, propositions):
 				#print(g)
 				g = g.lstrip()
 				g = g.rstrip()
-				#print("Before -> replace: %s" % (g))
+				print("Before -> replace: %s" % (g))
 				h = g.replace("->", ">>")
-				#print("After -> replace: %s" % (g))
+				print("After -> replace: %s" % (g))
 				h = input_to_cnf(h, propositions)
 				h = h.strip()
 				trans.append([g, h])
@@ -249,7 +259,7 @@ def convert_to_cnf(formulas, propositions):
 			if h not in check:
 				result = result + " & " + h
 				check.append(h)
-				#print("Result: %s" % (result))
+				print("Result: %s" % (result))
 	return [result, trans] 
 
 

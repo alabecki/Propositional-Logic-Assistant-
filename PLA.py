@@ -99,7 +99,7 @@ while True:
 		while com not in commands.keys():
 			print("\n")
 			print("What would you like to do?")
-			for c, cmd in commands.items():
+			for c, cmd in sorted(commands.items()):
 				print(c, cmd)
 			com = input()
 
@@ -135,7 +135,7 @@ while True:
 			while opt not in resol.keys():
 				print("\n")
 				print("Please choose one of the following options:")
-				for k, v in resol.items():
+				for k, v in sorted(resol.items()):
 					print(k, v)
 				opt = input()
 
@@ -155,7 +155,7 @@ while True:
 					print("\n")
 					print("%s is entailed by the KB \n" % (query))
 					print("Proof:")
-					for k, v in proof.items():
+					for k, v in sorted(proof.items()):
 						if v[0] == "set()":
 							print("%-2s: %-30s %s" % (k, "{''}", v[1]) )
 						else:
@@ -179,7 +179,7 @@ while True:
 					print("\n")
 					print("%s is entailed by the KB \n" % (query))
 					print("Proof:")
-					for k, v in proof.items():
+					for k, v in sorted(proof.items()):
 						if v[0] == "set()":
 							print("%-2s: %-30s %s" % (k, "{''}", v[1]) )
 						else:
