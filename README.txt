@@ -6,22 +6,29 @@ ________________________________________________________________________________
 0. Introduction
 _____________________________________________________________________________________
 
-The Propositional Logic Assistant (PLA) is designed to assist undergrate students in computing science in to acquire a solid understandign of Propositional
-Logic.
+The Propositional Logic Assistant (PLA) is designed to assist undergraduate students in computing science in to acquire a solid understanding of Propositional Logic.
 
 _____________________________________________________________________________________ 
 
 
-1. Installation
+0. Installation
 
-To run the program, a computer must have Python 3.x installed. The program was written on Python 3.6 but may run correctly on older versions. Version 3.4 or higher, however, is recommended. The program can be opened in on the command-line in Windows or Linux machines. 
+To run the program, a computer must have Python 3.x installed. The program 
+was written on Python 3.6 but may run correctly on older versions. Version 
+3.4 or higher, however, is recommended. The program can be opened in on the 
+command-line in Windows or Linux machines. 
 
-In the command line, go to the directory in which you have placed the folder containing the program and type:
+In the command line, go to the directory in which you have placed the 
+folder containing the program and type:
 
-	python PLA.py
+	python main.py
 
 (If you have Anaconda installed on your computer you need only type 
 “z_main.py”)
+
+If both Python 2 and Python 3 are installed on your system you may need to write as follows:
+	
+	python3 main.py
 
 The program makes use of the logic module from the sympy library. It is 
 recommended that the user employ pip when installing Python libraries. To 
@@ -29,25 +36,15 @@ install sympy simply type:
 
        pip install sympy	(perhaps with a “sudo”)
 
+If you have both Python 2.x and 3.x installed on your system install sympy as follows:
 
-If you have both Python 2.x and 3.x installed on your system, it might 
-run Python 2.x by default, which will cause trouble both when trying to 
-run the program and when installing modules. 
+	python3   -m pip install SomePackage    (Mac, Linux OS)
 
-If this is the case, type the following into the command prompt: 
-	
-	alias python='/usr/bin/python3'   (Linex)
-	
-	alias python='python3'		  (Mac)
+	or
 
-Then install sympy as follows:
-	
-	python3.x -m pip install sympy
+	py -3   -m pip install SomePackage	(Windows)
 
-This second way of installing sympy may be necessary even if you already
-have python 3 active.
-
-If you have trouble installing through pip, please try using Easy Install:
+ If you have trouble installing sympy through pip, please try using Easy Install:
 
 	easy_install sympy		(perhaps with sudo prefixed)
 

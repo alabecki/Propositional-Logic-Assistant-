@@ -40,6 +40,7 @@ def base():
 
 
 def get_file(name):
+# Returns an opened file and its name
 	while True:
 		if name.endswith(".txt") == False:
 			name = name + ".txt"
@@ -58,6 +59,7 @@ def get_file(name):
 				return res
 
 def get_atoms(formula):
+# Returns the propositional atoms form the given formula
 	for ch in formula:
 		ch = Symbol(ch)
 	formula = Symbol(formula)
@@ -65,6 +67,7 @@ def get_atoms(formula):
 
 
 def obtain_atomic_formulas(file):
+# Returns the propositional atoms form the given formula
 	propositions = set()
 	for f in file:
 		f = f.lstrip()
@@ -99,6 +102,7 @@ def obtain_atomic_formulas(file):
 
 
 def is_literal(formula):
+# Checks whether a formula is a literal
 	temp = str(formula)
 	for ch in temp:
 		if ch == "|" or ch == "&":
@@ -106,6 +110,7 @@ def is_literal(formula):
 	return True
 
 def all_literals(formulas):
+#checks if all formulas in an array or set are literals
 	for f in formulas:
 		if len(f) != 1:
 			return False
@@ -113,12 +118,14 @@ def all_literals(formulas):
 	return True
 
 def contains_empty(formulas):
+# Checks if any of the formulas (or clauses, rather) are empty
 	for f  in formulas:
 		if len(f) == 0:
 			return True
 	return False 
 
 def set_to_formulas(fset):
+# Converts a set of clauses into compound formula
 	temp = str(fset)
 	temp = temp.replace("{", "")
 	temp = temp.replace("}", "")
@@ -146,39 +153,6 @@ def matched(st, start):
 		end_pos += 1
 	return 0
 
-def get_sat_input(formula, propositions):
-	#print("Initial formula : %s" % (formula))
-	result = []
-	t1 = formula.split("&")
-	shadow = deepcopy(t1)
-	for t2 in t1:
-		#print("t2 %s" % (t2))
-		if t2.startswith("And"):
-			t2 = pre_cnf_to_cnf(t2, propositions)
-			#print("t2 after: %s" % (t2))
-			for t3 in t2:
-				shadow.append(t3)
-
-		for p in propositions:
-			if "Not(" + str(p) + ")" in t2:
-				bef = "Not(" + str(p) + ")"
-				aft = "~" + str(p)
-				t2 = t2.replace(bef, aft)
-		t2 = t2.replace("(", "")
-		t2 = t2.replace(")", "")
-	
-		for t3 in t2:
-			#print
-			t3 = t3.strip()
-			t3 = t3.split(",")
-			add = set()
-			for i in t3:
-				i = i.strip()
-				add.add(i)
-		result.append(add)
-	#print(len(result))
-	return result
-
 
 def input_to_cnf(formula, propositions):
 	#for f in formula:
@@ -186,7 +160,7 @@ def input_to_cnf(formula, propositions):
 	#formula = Symbol(formula)
 	formula = formula.strip()
 	g = to_cnf(formula)
-	print("g : %s" % (g))
+	#print("g : %s" % (g))
 	temp = str(g)
 	if "And" not in temp and "Or" not in temp:
 		result = "(" + temp + ")"
@@ -224,11 +198,13 @@ def input_to_cnf(formula, propositions):
 					result = result + " & " + item
 					check.append(item)
 		result = result.replace("&", "", 1)
-	print("Result: %s" % (result))
+	#print("Result: %s" % (result))
 	return(result)
 
 
 def convert_to_cnf(formulas, propositions):
+# Reads file of formulas and converts them to CNF. It returns (1) a string of all the formulas put together 
+# in CNF, and (2) and ordered pair of each formual and its specific CNF
 	result = ""
 	trans = []
 	h = ""
@@ -245,9 +221,9 @@ def convert_to_cnf(formulas, propositions):
 				#print(g)
 				g = g.lstrip()
 				g = g.rstrip()
-				print("Before -> replace: %s" % (g))
+				#print("Before -> replace: %s" % (g))
 				h = g.replace("->", ">>")
-				print("After -> replace: %s" % (g))
+				#print("After -> replace: %s" % (g))
 				h = input_to_cnf(h, propositions)
 				h = h.strip()
 				trans.append([g, h])
@@ -259,14 +235,13 @@ def convert_to_cnf(formulas, propositions):
 			if h not in check:
 				result = result + " & " + h
 				check.append(h)
-				print("Result: %s" % (result))
+				#print("Result: %s" % (result))
 	return [result, trans] 
 
 
 
-
-
 def pre_cnf_to_cnf(formula, propositions):
+# Takes a CNF formula in prefix notation and returns it in infix notation
 	temp = to_cnf(formula)
 	temp = str(temp)
 	#print("temp: %s" % (temp))
@@ -310,6 +285,7 @@ def pre_cnf_to_cnf(formula, propositions):
 	return(result)
 
 def cnf_to_set(formula):
+# Takes a CNF formula (infix notation) and returns the corresponding set of clauses 
 	result = []
 	formula = formula.replace("(", "")
 	formula = formula.replace(")", "")
@@ -333,65 +309,10 @@ def cnf_to_set(formula):
 	return result
 
 
-def build_formula_list(file):
-	lines = []
-	for line in file:
-		line = line.strip()
-		#if line.startswith("("):
-		line = re.sub(r'\s+', '', line)
-		lines.append(line.strip())
-	return lines
-
-def build_res_set(flist, props):
-	basis = list()
-	for f in flist:
-		for ch in f:
-			ch = Symbol(ch)
-		f = to_cnf(f)
-		#print("to cnf: %s ____________________________________________" % (f))
-		res = pre_cnf_to_cnf(f, props)
-		res = res.replace("(", "")
-		res = res.replace(")", "")
-		res = res.split("|")
-		items = set()
-		for r in res:
-			r = r.strip()
-			#print(r)
-			items.add(r)
-		basis.append(items)
-		#print("Basis %s" % (basis))
-	return basis
-
-
-def conjoin(formulas):		
-	#print(formulas)
-	AAA = Symbol("AAA")
-	conjunction = AAA
-	for f in formulas:
-		f = f.lstrip()
-		if f.startswith("#"):
-			continue
-		if len(f) >= 1:
-			if f[0].isdigit():
-				#f = f.lstrip()
-				g = ''.join([i for i in f if not i.isdigit()])
-				#print(g)
-				g = g.lstrip()
-				g = g.rstrip()
-				#print("Before -> replace: %s" % (g))
-				g = g.replace("->", ">>")
-				#print("After -> replace: %s" % (g))
-				g = to_cnf(g)
-				#print("Afrer to_cnf: %s " % (g)) 
-				#print("%s to CNF: %s" % (f, g)) 
-				conjunction = And(conjunction, g)
-	conjunction = str(conjunction)
-	conjunction = conjunction.replace("AAA,", "")
-	conjunction = to_cnf(conjunction)
-	return conjunction
 
 
 def add_query(query, propositions, fset, proof, step_tracker):
+# Input query to be checked against the KB
 	mfset = deepcopy(fset)
 	if query != "":
 		query = " ~(" + query + ")"
@@ -435,6 +356,7 @@ def add_query(query, propositions, fset, proof, step_tracker):
 	return mfset
 	
 def setup_proof_tracking(fset):
+# Initiates a "proof tracking" dictionary. Used in printing out resulting proof
 	proof = dict()
 	step = 1
 	step_tracker = dict()
@@ -446,6 +368,7 @@ def setup_proof_tracking(fset):
 	return [proof, step_tracker]
 
 def eliminate_supersets(clauses, d):
+# Used to eliminate superset clauses when employing resolution 
 	shadow = deepcopy(clauses)
 	for i in clauses:
 		for j in clauses:
@@ -457,6 +380,7 @@ def eliminate_supersets(clauses, d):
 	return shadow
 
 def eliminate_unipolar(clauses, props, d):
+# Used to eliminate clauses containing unipolar propositions when employing resolutions 
 	shadow = deepcopy(clauses)
 	sprops = deepcopy(props)
 	#print("sprops:")
@@ -498,6 +422,7 @@ def eliminate_unipolar(clauses, props, d):
 
 
 def eliminate_tautologies(clauses, propositions, d):
+# Used to eliminate tautological clauses when employing resolution 
 	shadow = deepcopy(clauses)
 	for p in propositions:
 		for c in clauses:
@@ -510,20 +435,21 @@ def eliminate_tautologies(clauses, propositions, d):
 	return shadow
 
 def get_atom(literal):
+# Used to get the atom corresponding to a given literal
 	literal = str(literal)
 	literal = literal.strip("~")
 	return literal 
 
 
 def find_empty(clauses):
+# Used to find empty clauses 
 	for c in clauses:
 		if len(c) == 0 or "False" in c:
 			return True
 	return False
 
-
-
 def literal_consistancy(clauses, propositions):
+#In resolution, check if a set of literals is consistant
 	for p in propositions:
 		p = str(p)
 		pp = set()
@@ -538,6 +464,7 @@ def literal_consistancy(clauses, propositions):
 	return True 
 
 def count_negations(a):
+#Counts the number of negations attached to a formula (usually to an atom)
 	a = str(a)
 	count = 0
 	for ch in a:
@@ -546,6 +473,7 @@ def count_negations(a):
 	return count 
 
 def resolve(a, clauses, props, proof, step_tracker, d):
+# Used to apply the resoltuon rule on a set of clauses with respect to a literal a
 	#print("Current step tracker:_____________")
 	#for step in step_tracker.keys():
 	#	print(step)
@@ -616,6 +544,7 @@ def resolve(a, clauses, props, proof, step_tracker, d):
 	return True
 
 def update_unit_clauses(clauses):
+#Used to update the set of unit clauses (those clauses that consist of a literal)
 	unit_clauses = []
 	for c in clauses:
 		if len(c) == 1:
@@ -624,6 +553,7 @@ def update_unit_clauses(clauses):
 	return unit_clauses
 
 def resolution(clauses, propositions, proof, step_tracker):
+# Main resolution function - includes diagonstic prints for the user
 	step = len(proof.keys()) + 1
 	print("\n")
 	print("################################\n")
@@ -671,16 +601,12 @@ def resolution(clauses, propositions, proof, step_tracker):
 			for c in clauses:
 				print(c)
 		
-		
 		unit_clauses = update_unit_clauses(clauses)
 		print("Unit Clauses:")
 		for uc in unit_clauses:
 			print(uc)
 
 		print("Employment of the Resolution Rule:")
-
-		#negated_unit = [list(filter(lambda x: x in negated_conclusion, sublist)) for sublist in unit_clauses]
-		#negated_unit = set(negated_conclusion).intersection(set(unit_clauses))
 		negated_unit = []
 		for nc in negated_conclusion:
 			#print("nc: %s" % (nc))
@@ -773,6 +699,7 @@ def resolution(clauses, propositions, proof, step_tracker):
 
 
 def resolution_no_diagonsis(clauses, propositions, proof, step_tracker):
+# Same as the resolution function but does not print diagnosis 
 	step = len(proof.keys()) + 1
 	props = deepcopy(propositions)
 	
@@ -804,8 +731,6 @@ def resolution_no_diagonsis(clauses, propositions, proof, step_tracker):
 			return True
 
 		unit_clauses = update_unit_clauses(clauses)
-		#negated_unit = [list(filter(lambda x: x in negated_conclusion, sublist)) for sublist in unit_clauses]
-		#negated_unit = set(negated_conclusion).intersection(set(unit_clauses))
 		negated_unit = []
 		for nc in negated_conclusion:
 			#print("nc: %s" % (nc))
