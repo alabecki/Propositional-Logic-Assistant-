@@ -139,21 +139,21 @@ while True:
 			if opt == "1":
 				if resolution_no_diagonsis(mfset, propositions, proof, step_tracker):
 					print("\n")
-					print("%s is not entailed by the KB" % (query))
+					print(" %s is not entailed by the KB" % (query))
 					print("___________________________________________________ \n")
 				else:
 					print("\n")
-					print("%s is entailed by the KB" % (query))
+					print(" %s is entailed by the KB" % (query))
 					print("___________________________________________________ \n")
 
 
 			if opt == "2":
 				if resolution_no_diagonsis(mfset, propositions, proof, step_tracker):
 					print("\n")
-					print("%s is not entailed by the KB \n" % (query))
+					print(" %s is not entailed by the KB \n" % (query))
 				else:
 					print("\n")
-					print("%s is entailed by the KB" % (query))
+					print(" %s is entailed by the KB" % (query))
 					print("___________________________________________________ \n")
 					print("Proof:")
 					for k, v in sorted(proof.items()):
@@ -165,13 +165,13 @@ while True:
 			if opt == "3":
 				if resolution(mfset, propositions, proof, step_tracker):
 					print("\n")
-					print("%s is not entailed by the KB" % (query))
+					print(" %s is not entailed by the KB" % (query))
 					print("___________________________________________________ \n")
 					print("(Scroll up to view diagnosis)")
 
 				else:
 					print("\n")
-					print("%s is entailed by the KB \n" % (query))
+					print(" %s is entailed by the KB \n" % (query))
 					print("___________________________________________________ \n")
 
 					print("(Scroll up to view diagnosis)")
@@ -179,12 +179,12 @@ while True:
 			if opt == "4":			
 				if resolution(mfset, propositions, proof, step_tracker):
 					print("\n")
-					print("%s is not entailed by the KB \n" % (query))
+					print(" %s is not entailed by the KB \n" % (query))
 					print("___________________________________________________ \n")
 					print("(Scroll up to view diagnosis)")
 				else:
 					print("\n")
-					print("%s is entailed by the KB \n" % (query))
+					print(" %s is entailed by the KB \n" % (query))
 					print("Proof:")
 					for k, v in sorted(proof.items()):
 						if v[0] == "set()":

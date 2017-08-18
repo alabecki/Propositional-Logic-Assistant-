@@ -182,7 +182,7 @@ def input_to_cnf(formula, propositions):
 			if t.endswith(","):
 				t = t[:-1]
 			t = t.replace(",", " |")
-			print("t: %s" % (t))
+			#print("t: %s" % (t))
 			if t == "" or t == " ":
 				continue
 			t = re.split(r'\|\s*(?![^()]*\))', t)
